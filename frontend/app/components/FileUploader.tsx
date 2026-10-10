@@ -1,6 +1,7 @@
 import {useCallback} from 'react'
 import {useDropzone} from 'react-dropzone'
 import { formatSize } from '../lib/utils'
+import { MAX_FILE_SIZE } from '~/constants'
 
 interface FileUploaderProps {
     file: File | null;
@@ -14,7 +15,7 @@ const FileUploader = ({ file, onFileSelect }: FileUploaderProps) => {
         onFileSelect?.(file);
     }, [onFileSelect]);
 
-    const maxFileSize = 10 * 1024 * 1024; // 10MB in bytes (same limit as the backend)
+    const maxFileSize = MAX_FILE_SIZE; // same limit as the backend
 
     const {getRootProps, getInputProps, fileRejections} = useDropzone({
         onDrop,

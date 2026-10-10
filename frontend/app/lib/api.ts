@@ -1,7 +1,9 @@
 // The ONLY place the frontend talks to the backend.
 // Every request goes through `request()`, which adds the base URL, the JWT and error handling.
 
-export const API_URL = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/$/, "");
+import { API_BASE_URL } from "~/constants";
+
+export const API_URL = API_BASE_URL;
 
 const TOKEN_KEY = "resumind_token";
 
