@@ -1,7 +1,24 @@
+# OS / editor
 .DS_Store
-.env
-/node_modules/
+Thumbs.db
+.idea/workspace.xml
 
-# React Router
-/.react-router/
-/build/
+# Dependencies (frontend + backend)
+node_modules/
+
+# Environment variables — NEVER commit real secrets
+.env
+.env.*
+!.env.example
+
+# Frontend build output (React Router)
+frontend/.react-router/
+frontend/build/
+
+# Backend user uploads (resume PDFs and preview images)
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# Logs
+npm-debug.log*
+*.log

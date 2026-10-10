@@ -1,0 +1,61 @@
+{
+  "_comment": "Example documents used by seed.js. The password below is plain text ONLY because seed.js hashes it with bcrypt before saving — real users never have a plain password in the database.",
+  "user": {
+    "username": "demo_student",
+    "email": "demo@resumind.dev",
+    "password": "Demo@1234"
+  },
+  "resume": {
+    "originalName": "demo-resume.pdf",
+    "uploadDate": "2026-07-01T10:00:00.000Z"
+  },
+  "analysis": {
+    "companyName": "Google",
+    "jobTitle": "Junior Frontend Developer",
+    "jobDescription": "We are looking for a Junior Frontend Developer with strong skills in React, TypeScript and CSS. Experience with REST APIs, Git and responsive design is required. Knowledge of testing (Jest) and accessibility is a plus.",
+    "createdAt": "2026-07-01T10:01:30.000Z",
+    "feedback": {
+      "overallScore": 72,
+      "ATS": {
+        "score": 78,
+        "tips": [
+          { "type": "good", "tip": "Clear section headings that ATS can parse" },
+          { "type": "good", "tip": "Includes React and TypeScript keywords" },
+          { "type": "improve", "tip": "Add 'REST API' and 'Jest' keywords from the job description" }
+        ]
+      },
+      "toneAndStyle": {
+        "score": 75,
+        "tips": [
+          { "type": "good", "tip": "Professional, concise language", "explanation": "Bullet points are short and start with action verbs such as 'Built' and 'Designed'." },
+          { "type": "improve", "tip": "Avoid first-person pronouns", "explanation": "The summary uses 'I am'. Resumes read better in implied first person, e.g. 'Frontend developer with…'." },
+          { "type": "improve", "tip": "Keep tense consistent", "explanation": "Past roles mix present and past tense. Use past tense for finished work." }
+        ]
+      },
+      "content": {
+        "score": 65,
+        "tips": [
+          { "type": "good", "tip": "Relevant university projects", "explanation": "The AI Resume Analyzer project directly shows React and API experience." },
+          { "type": "improve", "tip": "Quantify your achievements", "explanation": "Add numbers, e.g. 'reduced page load time by 30%' or 'used by 200 students'." },
+          { "type": "improve", "tip": "Mention testing experience", "explanation": "The job lists Jest as a plus; add any unit tests you have written." }
+        ]
+      },
+      "structure": {
+        "score": 80,
+        "tips": [
+          { "type": "good", "tip": "Single-page layout", "explanation": "One page is ideal for a junior candidate." },
+          { "type": "good", "tip": "Logical section order", "explanation": "Education, Skills, Projects, Experience is a good order for a student." },
+          { "type": "improve", "tip": "Avoid tables for skills", "explanation": "Some ATS cannot read tables. Use a simple comma-separated list." }
+        ]
+      },
+      "skills": {
+        "score": 70,
+        "tips": [
+          { "type": "good", "tip": "Strong core frontend stack", "explanation": "React, TypeScript, Tailwind CSS and Git match the job requirements." },
+          { "type": "improve", "tip": "Add accessibility (a11y)", "explanation": "The job mentions accessibility; list any ARIA or WCAG experience." },
+          { "type": "improve", "tip": "Group skills by category", "explanation": "Split into Languages, Frameworks and Tools so recruiters scan faster." }
+        ]
+      }
+    }
+  }
+}
