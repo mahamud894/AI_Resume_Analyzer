@@ -121,15 +121,17 @@ export const AccordionHeader: React.FC<AccordionHeaderProps> = ({
 
     return (
         <button
+            type="button"
             onClick={handleClick}
+            aria-expanded={isActive}
             className={`
-        w-full px-4 py-3 text-left
-        focus:outline-none
+        w-full min-h-14 px-3 sm:px-4 py-3 text-left gap-3 rounded-lg
+        hover:bg-gray-50 focus-visible:-outline-offset-2
         transition-colors duration-200 flex items-center justify-between cursor-pointer
         ${className}
       `}
         >
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-3 min-w-0">
                 {iconPosition === "left" && (icon || defaultIcon)}
                 <div className="flex-1">{children}</div>
             </div>
@@ -160,7 +162,7 @@ export const AccordionContent: React.FC<AccordionContentProps> = ({
         ${className}
       `}
         >
-            <div className="px-4 py-3 ">{children}</div>
+            <div className="px-1 sm:px-4 py-3">{children}</div>
         </div>
     );
 };

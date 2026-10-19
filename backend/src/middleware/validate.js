@@ -1,5 +1,7 @@
 // Input validation rules (express-validator) + a middleware that rejects invalid requests.
 import { body, param, validationResult } from "express-validator";
+import { MAX_EDITED_TEXT } from "../models/CoverLetter.js";
+import { TONES } from "../services/coverLetterService.js";
 import ApiError from "../utils/ApiError.js";
 
 // Put this after a list of rules: it stops the request with 400 if any rule failed.
@@ -51,6 +53,53 @@ export const analyzeRules = [
         .trim()
         .isLength({ min: 20, max: 10000 })
         .withMessage("Job description must be 20-10000 characters"),
+    validate,
+];
+
+export const coverLetterRules = [
+    body("hiringManagerName")
+        .optional({ values: "null" })
+        .isString()
+        .trim()
+        .isLength({ max: 100 })
+        .withMessage("Hiring manager name must be at most 100 characters"),
+    body("companyAddress")
+        .optional({ values: "null" })
+        .isString()
+        .trim()
+        .isLength({ max: 300 })
+        .withMessage("Company address must be at most 300 characters"),
+    body("jobSource")
+        .optional({ values: "null" })
+        .isString()
+        .trim()
+        .isLength({ max: 100 })
+        .withMessage("Job source must be at most 100 characters"),
+    body("tone")
+        .optional({ values: "null" })
+        .isIn(TONES)
+        .withMessage(`Tone must be one of: ${TONES.join(", ")}`),
+    validate,
+];
+
+export const coverLetterEditRules = [
+    body("editedText")
+        .isString()
+        .withMessage("editedText must be text")
+        .isLength({ max: MAX_EDITED_TEXT })
+        .withMessage(`The letter must be at most ${MAX_EDITED_TEXT} characters`),
+    validate,
+];
+
+export const improvedEditRules = [
+    body("europassCv")
+        .custom((v) => v === null || (typeof v === "object" && !Array.isArray(v)))
+        .withMessage("europassCv must be an object (or null to reset to the AI version)"),
+    validate,
+];
+
+export const analysisIdParamRules = [
+    param("analysisId").isMongoId().withMessage("Invalid analysis id"),
     validate,
 ];
 

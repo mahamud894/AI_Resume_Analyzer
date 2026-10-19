@@ -71,18 +71,18 @@ const Upload = () => {
             <Navbar />
 
             <section className="main-section">
-                <div className="page-heading py-16">
+                <div className="page-heading py-6 sm:py-12 lg:py-16">
                     <h1>Smart feedback for your dream job</h1>
                     {isProcessing ? (
                         <>
-                            <h2>{statusText}</h2>
-                            <img src="/images/resume-scan.gif" className="w-full" />
+                            <h2 role="status">{statusText}</h2>
+                            <img src="/images/resume-scan.gif" alt="Analyzing your resume" className="w-full max-w-xs sm:max-w-xl lg:max-w-3xl" />
                         </>
                     ) : (
                         <h2>Drop your resume for an ATS score and improvement tips</h2>
                     )}
                     {!isProcessing && (
-                        <form id="upload-form" onSubmit={handleSubmit} className="flex flex-col gap-4 mt-8">
+                        <form id="upload-form" onSubmit={handleSubmit} className="flex flex-col gap-4 sm:gap-5 mt-2 sm:mt-8 text-left">
                             <div className="form-div">
                                 <label htmlFor="company-name">Company Name</label>
                                 <input type="text" name="company-name" placeholder="Company Name" id="company-name" maxLength={100} />
@@ -93,7 +93,7 @@ const Upload = () => {
                             </div>
                             <div className="form-div">
                                 <label htmlFor="job-description">Job Description</label>
-                                <textarea rows={5} name="job-description" placeholder="Job Description" id="job-description" maxLength={10000} required />
+                                <textarea rows={6} className="resize-y md:min-h-[220px] lg:min-h-[260px]" name="job-description" placeholder="Job Description" id="job-description" maxLength={10000} required />
                             </div>
 
                             <div className="form-div">
@@ -107,7 +107,7 @@ const Upload = () => {
                                 </p>
                             )}
 
-                            <button className="primary-button" type="submit">
+                            <button className="primary-button text-lg font-semibold py-3" type="submit">
                                 Analyze Resume
                             </button>
                         </form>

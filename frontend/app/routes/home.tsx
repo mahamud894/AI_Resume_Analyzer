@@ -32,7 +32,7 @@ export default function Home() {
     <Navbar />
 
     <section className="main-section">
-      <div className="page-heading py-16">
+      <div className="page-heading py-6 sm:py-12 lg:py-16">
         <h1>Track Your Applications & Resume Ratings</h1>
         {error ? (
             <h2 className="!text-red-600">{error}</h2>
@@ -44,7 +44,7 @@ export default function Home() {
       </div>
       {loadingResumes && (
           <div className="flex flex-col items-center justify-center">
-            <img src="/images/resume-scan-2.gif" className="w-[200px]" />
+            <img src="/images/resume-scan-2.gif" alt="Loading your resumes" className="w-[160px] sm:w-[200px]" />
           </div>
       )}
 
@@ -57,8 +57,8 @@ export default function Home() {
       )}
 
       {!loadingResumes && !error && resumes?.length === 0 && (
-          <div className="flex flex-col items-center justify-center mt-10 gap-4">
-            <Link to="/upload" className="primary-button w-fit text-xl font-semibold">
+          <div className="flex flex-col items-center justify-center mt-4 sm:mt-10 gap-4 w-full">
+            <Link to="/upload" className="primary-button sm:w-fit text-xl font-semibold px-8">
               Upload Resume
             </Link>
           </div>

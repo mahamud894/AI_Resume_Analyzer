@@ -132,7 +132,10 @@ const MAX_ATTEMPTS = 3;
 const isTemporary = (err) => [500, 503, 504].includes(err.status);
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-export async function analyzeResume(input) {
+// Sends a prompt to Gemini in JSON mode (the answer must match `schema`) and returns the parsed object.
+// Shared by every AI feature so they all get the same retry logic and error messages.
+// `task` is only used in the error message, e.g. "analyze the resume".
+export async function generateJson({ prompt, schema, task, temperature = 0.2 }) {
     const ai = getClient();
 
     let response;
@@ -140,11 +143,11 @@ export async function analyzeResume(input) {
         try {
             response = await ai.models.generateContent({
                 model: config.geminiModel,
-                contents: buildPrompt(input),
+                contents: prompt,
                 config: {
                     responseMimeType: "application/json",
-                    responseJsonSchema: FEEDBACK_SCHEMA,
-                    temperature: 0.2,
+                    responseJsonSchema: schema,
+                    temperature,
                 },
             });
             break;
@@ -157,21 +160,34 @@ export async function analyzeResume(input) {
             if (/API_KEY_INVALID|API key not valid/i.test(err.message)) {
                 throw new ApiError(503, "AI service is misconfigured (GEMINI_API_KEY is invalid).");
             }
+            if (err.status === 429 && /PerDay/i.test(err.message)) {
+                throw new ApiError(
+                    429,
+                    "The free daily AI quota is used up. Please try again tomorrow (or set another GEMINI_MODEL)."
+                );
+            }
             if (err.status === 429) {
                 throw new ApiError(429, "AI rate limit reached. Please wait a minute and try again.");
             }
             if (isTemporary(err)) {
                 throw new ApiError(503, "The AI model is busy right now. Please try again in a minute.");
             }
-            throw new ApiError(502, "AI service failed to analyze the resume. Please try again.");
+            throw new ApiError(502, `AI service failed to ${task}. Please try again.`);
         }
     }
 
-    let parsed;
     try {
-        parsed = JSON.parse(response.text);
+        return JSON.parse(response.text);
     } catch {
         throw new ApiError(502, "AI returned invalid JSON. Please try again.");
     }
-    return normalizeFeedback(parsed);
+}
+
+export async function analyzeResume(input) {
+    const raw = await generateJson({
+        prompt: buildPrompt(input),
+        schema: FEEDBACK_SCHEMA,
+        task: "analyze the resume",
+    });
+    return normalizeFeedback(raw);
 }

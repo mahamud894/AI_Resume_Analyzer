@@ -48,21 +48,21 @@ const WipeApp = () => {
     };
 
     if (!isAuthenticated || isLoading) {
-        return <div className="p-10">Loading...</div>;
+        return <div className="p-4 sm:p-10">Loading...</div>;
     }
 
     return (
-        <main className="p-10 flex flex-col gap-4">
+        <main className="!pt-4 sm:!pt-10 px-4 sm:px-10 pb-10 flex flex-col gap-4 max-w-5xl mx-auto">
             <Link to="/" className="back-button w-fit">
                 <img src="/icons/back.svg" alt="back" className="w-2.5 h-2.5" />
                 <span className="text-gray-800 text-sm font-semibold">Back to Homepage</span>
             </Link>
-            <p>Authenticated as: <b>{user?.username}</b> ({user?.email})</p>
+            <p className="break-words">Authenticated as: <b>{user?.username}</b> <span className="break-all">({user?.email})</span></p>
             <p>Existing resumes: {resumes.length}</p>
             <div className="flex flex-col gap-2">
                 {resumes.map((resume) => (
-                    <div key={resume.id} className="flex flex-row gap-4">
-                        <p>{resume.originalName}</p>
+                    <div key={resume.id} className="flex flex-row flex-wrap gap-x-4 gap-y-1 rounded-xl bg-gray-50 px-3 py-2">
+                        <p className="break-all min-w-0 font-medium">{resume.originalName}</p>
                         <p className="text-gray-500">{formatSize(resume.fileSize)}</p>
                         <p className="text-gray-500">{resume.analyses.length} analysis(es)</p>
                     </div>
@@ -71,7 +71,7 @@ const WipeApp = () => {
             {error && <p className="text-red-600">{error}</p>}
             <div>
                 <button
-                    className="bg-blue-500 text-white px-4 py-2 rounded-md cursor-pointer disabled:opacity-50"
+                    className="bg-blue-500 text-white px-4 py-2 min-h-11 w-full sm:w-fit rounded-md cursor-pointer disabled:opacity-50"
                     onClick={handleDelete}
                     disabled={isDeleting || resumes.length === 0}
                 >

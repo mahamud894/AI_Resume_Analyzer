@@ -18,35 +18,59 @@
   --color-badge-yellow-text: #73321b;
 }
 
-html,
-body {
-  @apply bg-white;
-}
+/* Element styles live in the base layer, so Tailwind utility classes (e.g. sm:text-4xl) can override them */
+@layer base {
+  html,
+  body {
+    @apply bg-white;
+  }
+  /* Guard against sideways scrolling on small phones. `clip` (not `hidden`) keeps position: sticky working. */
+  html, body { overflow-x: clip; }
+  body { overflow-wrap: break-word; }
 
-main {
-  @apply min-h-screen pt-10;
-}
-h1 {
-  @apply text-6xl  text-gradient leading-tight tracking-[-2px] font-semibold;
-}
+  main {
+    @apply min-h-screen pt-4 sm:pt-10;
+  }
+  /* Fluid type: 36px on a 360px phone → 60px on desktop */
+  h1 {
+    @apply text-gradient leading-tight font-semibold;
+    font-size: clamp(2.25rem, 1.4rem + 3.6vw, 3.75rem);
+    letter-spacing: -0.03em;
+  }
 
-h2 {
-  @apply text-3xl text-dark-200;
-}
+  h2 {
+    @apply text-dark-200;
+    font-size: clamp(1.25rem, 1rem + 1.2vw, 1.875rem);
+    line-height: 1.3;
+  }
 
-label {
-  @apply text-dark-200;
-}
-input {
-  @apply w-full p-4 inset-shadow rounded-2xl focus:outline-none bg-white;
-}
+  label {
+    @apply text-dark-200;
+  }
+  /* 16px text stops iOS from zooming into the field; p-4 keeps fields well above 44px */
+  input,
+  textarea {
+    @apply w-full p-4 inset-shadow rounded-2xl bg-white text-base;
+    outline: none;
+  }
+  input:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid #8e98ff;
+    outline-offset: 1px;
+  }
 
-textarea {
-  @apply w-full p-4 inset-shadow rounded-2xl focus:outline-none bg-white;
-}
+  form {
+    @apply flex flex-col items-start gap-8 w-full;
+  }
 
-form {
-  @apply flex flex-col items-start gap-8 w-full;
+  /* Visible focus ring for keyboard users on every link and button */
+  a:focus-visible,
+  button:focus-visible,
+  [role="button"]:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 2px solid #606beb;
+    outline-offset: 2px;
+  }
 }
 
 @layer components {
@@ -54,50 +78,52 @@ form {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-[#AB8C95] via-[#000000] to-[#8E97C5];
   }
   .gradient-border {
-    @apply bg-gradient-to-b from-light-blue-100 to-light-blue-200 p-4 rounded-2xl;
+    @apply bg-gradient-to-b from-light-blue-100 to-light-blue-200 p-3 sm:p-4 rounded-2xl;
   }
   .primary-button {
-    @apply primary-gradient text-white rounded-full px-4 py-2 cursor-pointer w-full;
+    @apply primary-gradient text-white rounded-full px-4 py-2 cursor-pointer w-full min-h-11 inline-flex items-center justify-center text-center disabled:opacity-60 disabled:cursor-not-allowed;
   }
   .resume-nav {
-    @apply flex flex-row justify-between items-center p-4 border-b border-gray-200;
+    @apply flex flex-row justify-between items-center gap-3 px-4 sm:px-6 py-3 border-b border-gray-200;
   }
   .resume-summary {
-    @apply flex flex-row items-center justify-center p-4 gap-4;
+    @apply flex flex-row items-center justify-center px-3 py-2 sm:p-4 gap-4;
     .category {
-      @apply flex flex-row gap-2 items-center bg-gray-50 rounded-2xl p-4 w-full justify-between;
+      @apply flex flex-row flex-wrap gap-2 items-center bg-gray-50 rounded-2xl p-3 sm:p-4 w-full justify-between;
     }
   }
   .back-button {
-    @apply flex flex-row items-center gap-2 border border-gray-200 rounded-lg p-2 shadow-sm;
+    @apply flex flex-row items-center gap-2 border border-gray-200 rounded-lg px-3 py-2 min-h-11 shadow-sm shrink-0 bg-white;
   }
   .auth-button {
-    @apply primary-gradient rounded-full py-4 px-8 cursor-pointer w-[600px] max-md:w-full text-3xl font-semibold text-white;
+    @apply primary-gradient rounded-full py-3 sm:py-4 px-8 min-h-11 cursor-pointer w-full text-xl sm:text-2xl md:text-3xl font-semibold text-white disabled:cursor-not-allowed;
   }
+  /* Side padding: 16px phone, 24px tablet, 40px desktop; content capped on very wide screens */
   .main-section {
-    @apply flex flex-col items-center gap-8 pt-12 mx-15 pb-5;
+    @apply flex flex-col items-center gap-6 sm:gap-8 pt-6 sm:pt-12 pb-10 px-4 sm:px-6 lg:px-10 w-full max-w-[1850px] mx-auto;
   }
   .page-heading {
-    @apply flex flex-col items-center gap-8 max-w-4xl text-center;
+    @apply flex flex-col items-center gap-4 sm:gap-8 w-full max-w-4xl text-center;
   }
+  /* 1 column phone, 2 tablet, 3 laptop, 4 on very large screens */
   .resumes-section {
-    @apply flex flex-wrap max-lg:flex-col gap-6 items-start  w-full max-w-[1850px] justify-evenly;
+    @apply grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 min-[1800px]:grid-cols-4 gap-4 sm:gap-6 w-full;
   }
 
   .resume-card {
-    @apply flex flex-col gap-8 h-[560px] w-full lg:w-[450px] xl:w-[490px] bg-white rounded-2xl p-4;
+    @apply flex flex-col gap-4 sm:gap-6 w-full min-w-0 bg-white rounded-2xl p-4;
   }
 
   .resume-card-header {
-    @apply flex flex-row gap-2 justify-between min-h-[110px] max-sm:flex-col items-center max-md:justify-center max-md:items-center;
+    @apply flex flex-row gap-3 justify-between items-center min-h-[100px];
   }
 
   .feedback-section {
-    @apply flex flex-col gap-8 w-1/2 px-8 max-lg:w-full py-6;
+    @apply flex flex-col gap-6 sm:gap-8 w-full lg:w-1/2 min-w-0 px-4 sm:px-6 lg:px-8 py-6;
   }
 
   .navbar {
-    @apply flex flex-row justify-between items-center bg-white rounded-full p-4 w-full px-10 max-w-[1200px] mx-auto;
+    @apply relative flex flex-row justify-between items-center gap-3 bg-white rounded-full py-2 sm:py-3 px-4 sm:px-6 lg:px-10 w-[calc(100%-2rem)] sm:w-[calc(100%-3rem)] max-w-[1200px] mx-auto;
   }
 
   .score-badge {
@@ -112,7 +138,22 @@ form {
     @apply relative p-8 text-center transition-all duration-700 cursor-pointer bg-white rounded-2xl min-h-[208px];
   }
   .uploader-selected-file {
-    @apply flex items-center justify-between p-3 bg-gray-50 rounded-2xl;
+    @apply flex items-center justify-between gap-3 p-3 bg-gray-50 rounded-2xl;
+  }
+
+  /* Bottom action bar on phones (Download PDF, Save, ...). On md+ the same actions sit in the top bar. */
+  .mobile-toolbar {
+    @apply md:hidden sticky bottom-0 z-20 flex gap-2 border-t border-gray-200 bg-white/95 backdrop-blur px-4 py-3;
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
+  .mobile-toolbar > * {
+    @apply flex-1 basis-0 min-w-0 px-2 text-sm whitespace-nowrap;
+  }
+  .mobile-toolbar > .primary-button {
+    @apply grow-[1.5] font-semibold; /* the main action gets the most room */
+  }
+  .toast {
+    @apply fixed z-30 bottom-24 md:bottom-6 left-4 right-4 md:left-auto md:right-6 text-center rounded-full bg-black text-white px-5 py-3 shadow-lg;
   }
 }
 
@@ -149,4 +190,194 @@ form {
   to {
     opacity: 1;
   }
+}
+
+/* ------------------------------------------------------------------ */
+/* Europass CV (Improve My Resume)                                     */
+/* ------------------------------------------------------------------ */
+.europass-cv {
+  --europass-blue: #0b4ea2;
+  background: white;
+  color: #1f2937;
+  font-size: 14px;
+  line-height: 1.5;
+  width: 100%;
+  max-width: 210mm; /* A4 width */
+  margin: 0 auto;
+  padding: 40px 44px;
+  border-radius: 1rem;
+  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.08);
+  outline: none;
+}
+/* Editable fields: subtle hint on hover, clear outline while typing */
+.europass-cv [contenteditable="true"] { border-radius: 3px; outline: none; transition: background 0.15s; }
+.europass-cv [contenteditable="true"]:hover { background: #f1f5fd; }
+.europass-cv [contenteditable="true"]:focus { background: #eef3fb; box-shadow: 0 0 0 2px #a7bff1; }
+
+.europass-header {
+  display: grid;
+  grid-template-columns: 28% 1fr;
+  gap: 24px;
+  padding-bottom: 16px;
+  margin-bottom: 8px;
+  border-bottom: 2px solid var(--europass-blue);
+}
+.europass-brand { display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
+/* We are not the official Europass portal, so no "europass" logo — just the document type */
+.europass-title { color: var(--europass-blue); font-weight: 700; font-size: 17px; letter-spacing: -0.2px; line-height: 1.2; }
+.europass-subtitle { color: #6b7280; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 2px; }
+.europass-name { font-size: 26px; font-weight: 700; color: #111827; line-height: 1.2; margin-bottom: 8px; }
+.europass-contacts { display: flex; flex-direction: column; gap: 2px; }
+.europass-contacts div { display: flex; gap: 6px; flex-wrap: wrap; }
+.europass-contacts dt { color: var(--europass-blue); font-weight: 600; min-width: 68px; }
+.europass-contacts dd { min-width: 0; overflow-wrap: anywhere; } /* long emails / URLs wrap instead of overflowing */
+
+.europass-section { margin-top: 18px; }
+.europass-heading {
+  display: grid;
+  grid-template-columns: 28% 1fr;
+  gap: 24px;
+  align-items: center;
+  color: var(--europass-blue);
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 10px;
+}
+.europass-heading::before { content: ""; grid-column: 1; }
+.europass-heading span { grid-column: 2; border-bottom: 1px solid #c7d6ef; padding-bottom: 4px; }
+
+.europass-row {
+  display: grid;
+  grid-template-columns: 28% 1fr;
+  gap: 24px;
+  margin-bottom: 12px;
+  break-inside: avoid;
+}
+.europass-label { text-align: right; color: var(--europass-blue); font-size: 13px; padding-top: 1px; }
+.europass-content { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.europass-item-title { font-weight: 700; color: #111827; }
+.europass-item-sub { color: #4b5563; }
+.europass-key { color: var(--europass-blue); font-weight: 600; }
+.europass-eqf { display: inline-block; width: fit-content; margin-top: 2px; font-size: 11px; font-weight: 600;
+  color: var(--europass-blue); background: #eef3fb; border-radius: 9999px; padding: 1px 8px; }
+.europass-keep { break-inside: avoid; } /* heading + first entry stay on the same page */
+.europass-list { list-style: disc; padding-left: 18px; display: flex; flex-direction: column; gap: 2px; }
+
+.europass-cefr { border-collapse: collapse; width: 100%; font-size: 12px; text-align: center; }
+.europass-cefr th, .europass-cefr td { border: 1px solid #c7d6ef; padding: 4px 6px; }
+.europass-cefr thead th { background: #eef3fb; color: var(--europass-blue); font-weight: 600; }
+.europass-cefr tbody th { text-align: left; font-weight: 600; }
+
+.europass-placeholder { background: #fff3a3; color: #7a4a00; border-radius: 3px; padding: 0 2px; }
+
+/* Phones: one column, date/label above the content. "screen" only — the printed PDF always keeps
+   the two-column A4 layout, whatever device it is printed from. */
+@media screen and (max-width: 640px) {
+  .europass-cv { padding: 20px 16px; font-size: 15px; }
+  .europass-header, .europass-heading, .europass-row { grid-template-columns: 1fr; gap: 4px; }
+  .europass-brand, .europass-label { align-items: flex-start; text-align: left; }
+  .europass-label { font-weight: 600; }
+  .europass-heading::before { display: none; }
+  .europass-heading span { grid-column: 1; }
+  .europass-name { font-size: 22px; }
+  /* The language table keeps its columns and scrolls inside its own box — the page never scrolls sideways */
+  .europass-cefr-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin-right: -16px; padding-right: 16px; }
+  .europass-cefr { min-width: 520px; }
+}
+
+/* Download PDF = browser print → "Save as PDF". Only the CV is printed: A4, compact enough for
+   max. 2 pages, every entry kept whole and no section heading left alone at the bottom of a page. */
+@media print {
+  @page { size: A4; margin: 12mm 14mm; }
+  html, body { background: white !important; }
+  .no-print { display: none !important; }
+  .print-area { padding: 0 !important; margin: 0 !important; background: none !important; }
+  .europass-cv {
+    max-width: none; padding: 0; border-radius: 0; box-shadow: none !important;
+    font-size: 10.5pt; line-height: 1.4;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .europass-cv [contenteditable="true"] { background: none !important; box-shadow: none !important; }
+  .europass-header { padding-bottom: 10px; }
+  .europass-name { font-size: 20pt; }
+  .europass-section { margin-top: 12px; break-inside: auto; }
+  .europass-heading { margin-bottom: 6px; break-after: avoid; page-break-after: avoid; }
+  .europass-keep, .europass-row { break-inside: avoid; page-break-inside: avoid; }
+  .europass-row { margin-bottom: 8px; }
+  .europass-cefr { font-size: 9pt; min-width: 0; }
+  .europass-cefr-scroll { overflow: visible !important; }
+}
+
+/* ------------------------------------------------------------------ */
+/* Cover letter — same colours and type as the Europass CV             */
+/* ------------------------------------------------------------------ */
+/* In the components layer, so utility classes (sm:w-fit, border colour, ...) can override it */
+@layer components {
+  .secondary-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-height: 44px;
+    border-radius: 9999px;
+    padding: 0.5rem 1rem;
+    border: 1px solid #d1d5db;
+    color: var(--color-dark-200);
+    background: white;
+    cursor: pointer;
+  }
+  .secondary-button:hover { background: #f9fafb; }
+  .secondary-button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .tone-toggle { display: inline-flex; padding: 4px; gap: 4px; border-radius: 9999px; background: #eef3fb; }
+  .tone-toggle button { min-height: 40px; padding: 6px 18px; border-radius: 9999px; color: #0b4ea2; cursor: pointer; font-weight: 500; }
+  .tone-toggle button.active { background: #0b4ea2; color: white; }
+}
+
+.letter-sheet {
+  --europass-blue: #0b4ea2;
+  background: white;
+  color: #1f2937;
+  font-size: 14px;
+  line-height: 1.6;
+  width: 100%;
+  max-width: 210mm;          /* A4 width */
+  min-height: 297mm;         /* A4 height, so it looks like a page */
+  margin: 0 auto;
+  padding: 56px 64px;
+  border-radius: 1rem;
+  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.08);
+}
+.letter-sender { border-bottom: 2px solid var(--europass-blue); padding-bottom: 12px; margin-bottom: 20px; }
+.letter-sender-name { font-size: 22px; font-weight: 700; color: #111827; }
+.letter-sender-details { color: #4b5563; font-size: 13px; }
+.letter-date { text-align: right; color: #4b5563; margin-bottom: 20px; }
+.letter-recipient { margin-bottom: 20px; }
+.letter-subject { font-weight: 700; color: var(--europass-blue); margin-bottom: 16px; }
+.letter-body { display: flex; flex-direction: column; gap: 12px; text-align: justify; }
+.letter-signoff { margin-top: 24px; }
+.letter-signature { margin-top: 36px; font-weight: 700; color: #111827; }
+.letter-plain { display: flex; flex-direction: column; gap: 12px; white-space: pre-line; }
+.letter-editor { display: block; resize: vertical; font-family: inherit; outline: none; box-shadow: 0 0 0 2px #a7bff1, 0 4px 24px rgba(15, 23, 42, 0.08); }
+
+/* On screens narrower than A4 the sheet just follows the screen width ("screen" only — print stays A4) */
+@media screen and (max-width: 1024px) {
+  .letter-sheet { padding: 40px 40px; min-height: 0; }
+  .letter-editor { min-height: 70vh; font-size: 16px; } /* 16px: no iOS zoom while typing */
+}
+@media screen and (max-width: 640px) {
+  .letter-sheet { padding: 24px 18px; font-size: 15px; text-align: left; }
+  .letter-body { text-align: left; }
+  .letter-sender-name { font-size: 20px; }
+  .letter-editor { min-height: 65vh; font-size: 16px; }
+}
+
+@media print {
+  .letter-sheet {
+    max-width: none; min-height: 0; padding: 0; border-radius: 0; box-shadow: none !important; font-size: 11.5pt;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .letter-body p, .letter-plain p { break-inside: avoid; }
 }

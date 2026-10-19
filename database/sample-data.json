@@ -19,43 +19,279 @@
       "ATS": {
         "score": 78,
         "tips": [
-          { "type": "good", "tip": "Clear section headings that ATS can parse" },
-          { "type": "good", "tip": "Includes React and TypeScript keywords" },
-          { "type": "improve", "tip": "Add 'REST API' and 'Jest' keywords from the job description" }
+          {
+            "type": "good",
+            "tip": "Clear section headings that ATS can parse"
+          },
+          {
+            "type": "good",
+            "tip": "Includes React and TypeScript keywords"
+          },
+          {
+            "type": "improve",
+            "tip": "Add 'REST API' and 'Jest' keywords from the job description"
+          }
         ]
       },
       "toneAndStyle": {
         "score": 75,
         "tips": [
-          { "type": "good", "tip": "Professional, concise language", "explanation": "Bullet points are short and start with action verbs such as 'Built' and 'Designed'." },
-          { "type": "improve", "tip": "Avoid first-person pronouns", "explanation": "The summary uses 'I am'. Resumes read better in implied first person, e.g. 'Frontend developer with…'." },
-          { "type": "improve", "tip": "Keep tense consistent", "explanation": "Past roles mix present and past tense. Use past tense for finished work." }
+          {
+            "type": "good",
+            "tip": "Professional, concise language",
+            "explanation": "Bullet points are short and start with action verbs such as 'Built' and 'Designed'."
+          },
+          {
+            "type": "improve",
+            "tip": "Avoid first-person pronouns",
+            "explanation": "The summary uses 'I am'. Resumes read better in implied first person, e.g. 'Frontend developer with…'."
+          },
+          {
+            "type": "improve",
+            "tip": "Keep tense consistent",
+            "explanation": "Past roles mix present and past tense. Use past tense for finished work."
+          }
         ]
       },
       "content": {
         "score": 65,
         "tips": [
-          { "type": "good", "tip": "Relevant university projects", "explanation": "The AI Resume Analyzer project directly shows React and API experience." },
-          { "type": "improve", "tip": "Quantify your achievements", "explanation": "Add numbers, e.g. 'reduced page load time by 30%' or 'used by 200 students'." },
-          { "type": "improve", "tip": "Mention testing experience", "explanation": "The job lists Jest as a plus; add any unit tests you have written." }
+          {
+            "type": "good",
+            "tip": "Relevant university projects",
+            "explanation": "The AI Resume Analyzer project directly shows React and API experience."
+          },
+          {
+            "type": "improve",
+            "tip": "Quantify your achievements",
+            "explanation": "Add numbers, e.g. 'reduced page load time by 30%' or 'used by 200 students'."
+          },
+          {
+            "type": "improve",
+            "tip": "Mention testing experience",
+            "explanation": "The job lists Jest as a plus; add any unit tests you have written."
+          }
         ]
       },
       "structure": {
         "score": 80,
         "tips": [
-          { "type": "good", "tip": "Single-page layout", "explanation": "One page is ideal for a junior candidate." },
-          { "type": "good", "tip": "Logical section order", "explanation": "Education, Skills, Projects, Experience is a good order for a student." },
-          { "type": "improve", "tip": "Avoid tables for skills", "explanation": "Some ATS cannot read tables. Use a simple comma-separated list." }
+          {
+            "type": "good",
+            "tip": "Single-page layout",
+            "explanation": "One page is ideal for a junior candidate."
+          },
+          {
+            "type": "good",
+            "tip": "Logical section order",
+            "explanation": "Education, Skills, Projects, Experience is a good order for a student."
+          },
+          {
+            "type": "improve",
+            "tip": "Avoid tables for skills",
+            "explanation": "Some ATS cannot read tables. Use a simple comma-separated list."
+          }
         ]
       },
       "skills": {
         "score": 70,
         "tips": [
-          { "type": "good", "tip": "Strong core frontend stack", "explanation": "React, TypeScript, Tailwind CSS and Git match the job requirements." },
-          { "type": "improve", "tip": "Add accessibility (a11y)", "explanation": "The job mentions accessibility; list any ARIA or WCAG experience." },
-          { "type": "improve", "tip": "Group skills by category", "explanation": "Split into Languages, Frameworks and Tools so recruiters scan faster." }
+          {
+            "type": "good",
+            "tip": "Strong core frontend stack",
+            "explanation": "React, TypeScript, Tailwind CSS and Git match the job requirements."
+          },
+          {
+            "type": "improve",
+            "tip": "Add accessibility (a11y)",
+            "explanation": "The job mentions accessibility; list any ARIA or WCAG experience."
+          },
+          {
+            "type": "improve",
+            "tip": "Group skills by category",
+            "explanation": "Split into Languages, Frameworks and Tools so recruiters scan faster."
+          }
         ]
       }
     }
+  },
+  "improvedResume": {
+    "createdAt": "2026-07-01T10:05:00.000Z",
+    "europassCv": {
+      "personalInfo": {
+        "fullName": "Demo Student",
+        "email": "demo@resumind.dev",
+        "phone": "[Add your phone number]",
+        "address": "Khulna, Bangladesh",
+        "linkedin": "",
+        "github": "https://github.com/demo-student",
+        "website": ""
+      },
+      "aboutMe": "Junior Frontend Developer with hands-on experience in React, TypeScript and Tailwind CSS, gained through a frontend internship and a full-stack university project. Built a resume analysis app with React, Express and MongoDB, including JWT authentication and file uploads.",
+      "workExperience": [
+        {
+          "startDate": "[Add start date MM/YYYY]",
+          "endDate": "[Add end date MM/YYYY]",
+          "jobTitle": "Frontend Intern",
+          "employer": "Local Software Firm",
+          "city": "[Add city]",
+          "country": "[Add country]",
+          "responsibilities": [
+            "Designed reusable React components for the company's web interfaces.",
+            "Fixed responsive layout bugs so pages display correctly on different screen sizes.",
+            "[Add a measurable result, e.g. number of components built or bugs fixed]"
+          ]
+        }
+      ],
+      "education": [
+        {
+          "startDate": "[Add start date MM/YYYY]",
+          "endDate": "[Expected graduation date]",
+          "qualification": "Bachelor of Science (B.Sc.)",
+          "institution": "Northern University of Business and Technology Khulna",
+          "city": "Khulna",
+          "country": "Bangladesh",
+          "fieldOfStudy": "Computer Science and Engineering",
+          "grade": "",
+          "eqfLevel": "6"
+        }
+      ],
+      "languageSkills": {
+        "motherTongue": [
+          "[Add your mother tongue]"
+        ],
+        "otherLanguages": [
+          {
+            "language": "[Add a language you speak, e.g. English]",
+            "listening": "[Add level, e.g. B2]",
+            "reading": "[Add level, e.g. B2]",
+            "spokenProduction": "[Add level, e.g. B2]",
+            "spokenInteraction": "[Add level, e.g. B2]",
+            "writing": "[Add level, e.g. B2]"
+          }
+        ]
+      },
+      "digitalSkills": [
+        "Frontend: React, TypeScript, JavaScript, Tailwind CSS",
+        "Backend: Node.js, Express, MongoDB",
+        "Tools: Git"
+      ],
+      "projects": [
+        {
+          "name": "AI Resume Analyzer",
+          "description": "Built a React + Express + MongoDB web app that scores resumes with Google Gemini. Implemented JWT authentication, file uploads with Multer and a responsive Tailwind UI.",
+          "technologies": [
+            "React",
+            "Express",
+            "MongoDB",
+            "Google Gemini",
+            "Multer",
+            "Tailwind CSS"
+          ],
+          "link": "[Add project link, e.g. GitHub repository]"
+        }
+      ],
+      "certifications": [],
+      "communicationSkills": "",
+      "organisationalSkills": "",
+      "volunteering": [],
+      "references": "Available upon request"
+    },
+    "changes": [
+      {
+        "section": "Digital Skills",
+        "category": "ATS",
+        "before": "React, TypeScript, JavaScript, Tailwind CSS, Node.js, Express, MongoDB, Git",
+        "after": "Frontend: React, TypeScript, JavaScript, Tailwind CSS",
+        "reason": "Grouped skills into simple text categories instead of a table so ATS can parse them (structure tip: avoid tables)."
+      },
+      {
+        "section": "About Me",
+        "category": "toneAndStyle",
+        "before": "(missing)",
+        "after": "Junior Frontend Developer with hands-on experience in React, TypeScript and Tailwind CSS, gained through a frontend internship and a full-stack university project.",
+        "reason": "Added a professional summary in implied first person (tone tip: avoid \"I am\")."
+      },
+      {
+        "section": "Work Experience",
+        "category": "content",
+        "before": "(missing)",
+        "after": "[Add a measurable result, e.g. number of components built or bugs fixed]",
+        "reason": "Content tip asks to quantify achievements; no numbers exist in the resume, so a placeholder asks you for one instead of inventing it."
+      },
+      {
+        "section": "Work Experience",
+        "category": "structure",
+        "before": "Frontend Intern, Local Software Firm (3 months)",
+        "after": "[Add start date MM/YYYY] – [Add end date MM/YYYY]",
+        "reason": "Europass needs exact dates in reverse chronological order."
+      },
+      {
+        "section": "Digital Skills",
+        "category": "skills",
+        "before": "React, TypeScript, JavaScript, Tailwind CSS, Node.js, Express, MongoDB, Git",
+        "after": "Frontend / Backend / Tools groups",
+        "reason": "Skills tip: group skills by category so recruiters scan faster."
+      }
+    ]
+  },
+  "coverLetter": {
+    "createdAt": "2026-07-01T10:08:00.000Z",
+    "inputs": {
+      "hiringManagerName": "",
+      "companyAddress": "1600 Amphitheatre Parkway, Mountain View, USA",
+      "jobSource": "the Google Careers website",
+      "tone": "formal"
+    },
+    "letter": {
+      "sender": {
+        "fullName": "Demo Student",
+        "email": "demo@resumind.dev",
+        "phone": "[Add your phone number]",
+        "address": "Khulna, Bangladesh",
+        "linkedin": ""
+      },
+      "date": "1 July 2026",
+      "recipient": {
+        "name": "",
+        "title": "Hiring Manager",
+        "company": "Google",
+        "address": "1600 Amphitheatre Parkway, Mountain View, USA"
+      },
+      "subject": "Application for Junior Frontend Developer Position",
+      "salutation": "Dear Hiring Manager,",
+      "opening": "Discovering the Junior Frontend Developer opening through the Google Careers website immediately captured my professional interest, as my technical background aligns directly with your technological stack. Having built practical competence in modern web development through both professional internship experience and academic projects, I am eager to contribute my capabilities to your engineering team. My hands-on focus centers on building functional, accessible interfaces using standard frontend technologies.",
+      "body": [
+        "During my recent Frontend Intern position at a local software firm, I designed reusable React components for the company's web interfaces and fixed responsive layout bugs so pages display correctly on different screen sizes. In addition to these professional duties, I completed an AI Resume Analyzer project utilizing React, Express, MongoDB, and Tailwind CSS, which incorporated JWT authentication and file uploads. Furthermore, my academic foundation includes a Bachelor of Science in Computer Science and Engineering from Northern University of Business and Technology Khulna, where I strengthened my technical knowledge. Throughout these practical experiences, I utilized TypeScript, JavaScript, and Git to manage codebases and develop structured web solutions.",
+        "Contributing to [Mention something specific about Google] presents a compelling opportunity to apply my technical foundation within a prominent engineering environment. I bring dedicated hands-on proficiency in React, TypeScript, and Tailwind CSS, alongside practical exposure to backend integration through Node.js and RESTful concepts. By joining your organization, I aim to apply my technical background to support frontend development tasks while continuing to grow as a software engineer within a collaborative team structure."
+      ],
+      "closing": "I would appreciate the opportunity to discuss how my practical background in frontend development aligns with the requirements of your engineering team. A detailed overview of my qualifications is provided in the attached Europass curriculum vitae for your review. Thank you for your time and consideration of my application, and I look forward to the possibility of an interview.",
+      "signOff": "Kind regards,",
+      "signatureName": "Demo Student",
+      "wordCount": 304,
+      "highlights": [
+        {
+          "jobRequirement": "React",
+          "resumeEvidence": "Designed reusable React components for the company's web interfaces and built a React + Express + MongoDB web app",
+          "cvSection": "Work Experience & Projects"
+        },
+        {
+          "jobRequirement": "TypeScript",
+          "resumeEvidence": "Frontend: React, TypeScript, JavaScript, Tailwind CSS",
+          "cvSection": "Digital Skills"
+        },
+        {
+          "jobRequirement": "CSS / Tailwind CSS",
+          "resumeEvidence": "Fixed responsive layout bugs so pages display correctly on different screen sizes and responsive Tailwind UI",
+          "cvSection": "Work Experience & Projects"
+        },
+        {
+          "jobRequirement": "Git",
+          "resumeEvidence": "Tools: Git",
+          "cvSection": "Digital Skills"
+        }
+      ]
+    },
+    "editedText": null
   }
 }

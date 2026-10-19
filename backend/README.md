@@ -26,10 +26,14 @@ backend/
 │   ├── models/                # Mongoose schemas (match the ERD)
 │   │   ├── User.js
 │   │   ├── Resume.js
-│   │   └── Analysis.js
+│   │   ├── Analysis.js
+│   │   ├── ImprovedResume.js  # Europass version of a resume (1 per analysis)
+│   │   └── CoverLetter.js     # Cover letter (1 per improved resume) — ERD cover_letter_text
 │   ├── controllers/           # Request handlers (the "what happens" logic)
 │   │   ├── authController.js
-│   │   └── resumeController.js
+│   │   ├── resumeController.js
+│   │   ├── improveController.js  # "Improve My Resume (Europass)"
+│   │   └── coverLetterController.js  # "Generate Cover Letter" + save edits
 │   ├── routes/                # URL → middleware → controller wiring
 │   │   ├── authRoutes.js
 │   │   └── resumeRoutes.js
@@ -40,7 +44,9 @@ backend/
 │   │   └── errorHandler.js    # 404 + central JSON error handler
 │   ├── services/
 │   │   ├── pdfService.js      # PDF → plain text
-│   │   └── geminiService.js   # Prompt, JSON schema, Gemini call, response normalization
+│   │   ├── geminiService.js   # Shared Gemini JSON-mode call with retries + analysis prompt/schema
+│   │   ├── europassService.js # Europass CV schema, "never invent" prompt, normalization
+│   │   └── coverLetterService.js # Letter prompt/schema, fixed header/salutation rules, word-count retry
 │   └── utils/
 │       ├── ApiError.js        # Error with an HTTP status code
 │       ├── token.js           # sign / verify JWT
@@ -115,6 +121,12 @@ the JWT returned by register/login. Tokens expire after 7 days.
 | GET    | `/resume/:id/file`        | 🔒   | –                                                         | 200 PDF bytes (`application/pdf`) |
 | GET    | `/resume/:id/image`       | 🔒   | –                                                         | 200 PNG bytes |
 | DELETE | `/resume/:id`             | 🔒   | –                                                         | 200 `{ message, id }` |
+| POST   | `/resume/analysis/:analysisId/improve`  | 🔒 | –                                     | 201 `{ improved }` (Europass CV + changes; replaces an existing one) |
+| GET    | `/resume/analysis/:analysisId/improved` | 🔒 | –                                     | 200 `{ improved }` · 404 if not generated yet |
+| PUT    | `/resume/analysis/:analysisId/improved` | 🔒 | JSON `{ europassCv }` (edited CV, ≤ 100 KB) or `{ europassCv: null }` (reset) | 200 `{ improved }` |
+| POST   | `/resume/analysis/:analysisId/cover-letter` | 🔒 | JSON `{ hiringManagerName?, companyAddress?, jobSource?, tone? }` | 201 `{ coverLetter }` (replaces an existing one) · 400 if no improved resume |
+| GET    | `/resume/analysis/:analysisId/cover-letter` | 🔒 | –                                 | 200 `{ coverLetter }` · 404 if not generated yet |
+| PUT    | `/resume/analysis/:analysisId/cover-letter` | 🔒 | JSON `{ editedText }` (≤ 8000 chars; `""` = reset) | 200 `{ coverLetter }` |
 
 ### 3.2 Details and examples
 
@@ -248,10 +260,178 @@ Return the raw PDF / PNG. Because they need the `Authorization` header, the fron
 with `fetch`, then shows them using `URL.createObjectURL(blob)`.
 
 #### `DELETE /api/resume/:id` 🔒
-Deletes the resume, **all its analyses** and both files on disk.
+Deletes the resume, **all its analyses**, their improved resumes and cover letters, and both files on disk.
 ```json
 { "message": "Resume deleted", "id": "6aca15131f91ced92f7ef8c2" }
 ```
+
+#### `POST /api/resume/analysis/:analysisId/improve` 🔒 — "Improve My Resume (Europass)"
+
+No request body. `analysisId` must be one of **your** analyses (any other id → `404`).
+
+Steps: re-extract the resume text with pdf-parse → send it with the saved feedback (every `"improve"` tip)
+and the job title/description to Gemini in JSON mode with a strict `responseJsonSchema` (Europass CV +
+change list) → normalize the result → save it. Uses the same 3× retry and error handling as `/analyze`.
+Takes ~20–40 seconds. Calling it again **regenerates** and replaces the previous version
+(one improved resume per analysis, enforced by a unique index).
+
+Prompt rules: never invent experience, degrees, companies, dates, numbers or skills; keep job titles
+**exactly** as in the resume (also in About Me — no "SEO Content Writer" → "SEO Specialist"); only rephrase
+with strong action verbs; add job keywords only where the candidate has the skill; all dates `MM/YYYY`;
+write country-specific qualifications in full with grade scale and EQF level; leave out religion, marital
+status, parents' names and date of birth; put clear placeholders like `"[Add your English CEFR level, e.g. B2]"`
+where Europass needs missing information; address every "improve" tip and list each fix in `changes`.
+
+**Post-check (code, after Gemini answers)** — `postCheck()` in `services/europassService.js` enforces the key
+rules even if the model ignores the prompt:
+
+| Rule | Example |
+|------|---------|
+| Numbers not in the original resume → placeholder, and listed in `changes` | "by 40%" → "by [Add a measurable result, e.g. X%]" (a real "15%" is kept) |
+| All dates `MM/YYYY` | "30/11/2024", "November 30, 2024" → "11/2024" |
+| Ongoing degree → expected graduation | "Current" → "Expected 08/2026" (from "Expected Graduation: August 2026") or "[Expected graduation date]" |
+| "Current" only if the resume says Present/Current/Ongoing | otherwise "[Add end date MM/YYYY]" |
+| Qualification names in full | "H.S.C" → "Higher Secondary Certificate (HSC)", "S.S.C" → "Secondary School Certificate (SSC)" |
+| EQF level | SSC 3, HSC 4, Bachelor 6, Master 7, PhD 8, trainings "" |
+| Grade scale | "4.67" → "GPA 4.67 / 5.00"; university → "CGPA x / 4.00" |
+| No repeats | field of study inside the degree title; city/country inside the employer name |
+| Phone spacing | "+8801846650807" → "+880 1846 650807" |
+
+```json
+// 201 Created
+{
+  "improved": {
+    "id": "6acaffd93e58cbeb17864f08",
+    "analysisId": "6aca2f8814357dd8c2a26257",
+    "resumeId": "6aca2f8814357dd8c2a26256",
+    "userId": "6aca2f8814357dd8c2a26255",
+    "europassCv": {
+      "personalInfo": { "fullName": "Demo Student", "email": "demo@resumind.dev", "phone": "[Add your phone number]",
+                        "address": "Khulna, Bangladesh", "linkedin": "", "github": "https://github.com/demo-student", "website": "" },
+      "aboutMe": "Junior Frontend Developer with hands-on experience in React, TypeScript and Tailwind CSS…",
+      "workExperience": [ { "startDate": "[Add start date MM/YYYY]", "endDate": "[Add end date MM/YYYY]",
+                            "jobTitle": "Frontend Intern", "employer": "Local Software Firm", "city": "Khulna",
+                            "country": "Bangladesh", "responsibilities": [ "Designed reusable React components…" ] } ],
+      "education": [ { "startDate": "…", "endDate": "…", "qualification": "Bachelor of Science (B.Sc.)",
+                       "institution": "Northern University of Business and Technology Khulna", "city": "Khulna",
+                       "country": "Bangladesh", "fieldOfStudy": "Computer Science and Engineering", "grade": "" } ],
+      "languageSkills": { "motherTongue": [ "[Add your mother tongue]" ],
+                          "otherLanguages": [ { "language": "[Add a language you speak, e.g. English]", "listening": "[Add level, e.g. B2]",
+                                                "reading": "…", "spokenProduction": "…", "spokenInteraction": "…", "writing": "…" } ] },
+      "digitalSkills": [ "React", "TypeScript", "Tailwind CSS", "Node.js", "Express", "MongoDB", "Git" ],
+      "projects": [ { "name": "AI Resume Analyzer", "description": "…", "technologies": [ "React", "Express" ], "link": "" } ],
+      "certifications": [], "communicationSkills": "", "organisationalSkills": "", "volunteering": [],
+      "references": "Available upon request"
+    },
+    "changes": [
+      { "section": "About Me", "category": "toneAndStyle", "before": "(missing)",
+        "after": "Junior Frontend Developer with hands-on experience…",
+        "reason": "Added a summary in implied first person (tone tip: avoid \"I am\")." }
+    ],
+    "createdAt": "2026-10-11T03:17:45.038Z"
+  }
+}
+```
+Errors: `400` invalid id · `401` not logged in · `404` analysis not found / not yours · `422` PDF has no
+readable text · `429` Gemini rate limit · `502` Gemini failed · `503` key missing/invalid or model busy after retries.
+
+#### `GET /api/resume/analysis/:analysisId/improved` 🔒
+Returns the saved `{ improved }` (same shape as above), or `404 "No improved resume yet for this analysis"`.
+`GET /api/resume` and `GET /api/resume/:id` also include `improved: { id, analysisId, createdAt }` inside each
+analysis that has one, so the frontend can choose between "Improve My Resume" and "View Improved Resume".
+The improved resume itself includes `coverLetter: { id, improvedResumeId, updatedAt }` when a letter exists.
+
+#### `PUT /api/resume/analysis/:analysisId/improved` 🔒 — save inline CV edits
+
+The user edits the CV directly on the page. The AI version stays untouched in `europassCv`; the edits are
+stored in `editedCv`. The page, the PDF and the cover letter generator all use `editedCv ?? europassCv`.
+
+```json
+// Request — the whole CV (same shape as europassCv). Unknown fields are dropped, max 100 KB.
+{ "europassCv": { "personalInfo": { "fullName": "Mahamud Hassan", "phone": "+880 1846 650807", … }, "aboutMe": "…", … } }
+
+// Reset to the AI version
+{ "europassCv": null }
+
+// 200 OK
+{ "improved": { …, "europassCv": { /* AI version */ }, "editedCv": { /* your version or null */ },
+                "editedAt": "2026-10-11T09:12:00.000Z" } }
+```
+Errors: `400` `europassCv` is not an object/null · `404` analysis or improved resume not found / not yours ·
+`413` edited CV larger than 100 KB. Regenerating the improved resume discards the edits.
+
+#### `POST /api/resume/analysis/:analysisId/cover-letter` 🔒 — "Generate Cover Letter"
+
+Implements `cover_letter_text` from the original ERD (`CAREER_COPILOT_ASSESSMENT`).
+
+| Field               | Rules                                                                    |
+|---------------------|--------------------------------------------------------------------------|
+| `hiringManagerName` | optional, ≤ 100 chars. With a title ("Ms. Sarah Rahman") → "Dear Ms. Rahman"; without one → "Dear Sarah Rahman"; empty → "Dear Hiring Manager" |
+| `companyAddress`    | optional, ≤ 300 chars (empty → `"[Company address]"` placeholder)       |
+| `jobSource`         | optional, ≤ 100 chars, e.g. "LinkedIn" (used in the opening)            |
+| `tone`              | `"formal"` (default) or `"modern"`                                       |
+
+Steps: load the saved **ImprovedResume** (`europassCv`) and the analysis (company, job title, description) —
+`400 "Generate the improved resume first"` if there is none → Gemini (JSON mode, strict schema) writes only
+`opening`, `body[2]`, `closing` and `highlights` → the backend fills in the fixed parts (sender from the CV,
+date, recipient, subject `Application for <Job Title> Position`, salutation, sign-off "Yours sincerely" /
+"Kind regards", word count) → if the body is outside 250–400 words, Gemini is asked once more to fix the
+length → save (replaces any previous letter and its edits). Same retry/error handling as the other AI routes.
+
+Prompt rules: European business letter on one A4 page; no clichés or hype words; opening = position + where
+it was found + hook; body 1 = 2–3 achievements taken **only** from the CV that match the job; body 2 = why this
+company + value; closing = interview request + attached CV + thanks; never invent experience, numbers, degrees
+or company facts — unknown details become placeholders like `"[Mention something specific about Google]"`.
+
+```json
+// Request
+{ "hiringManagerName": "Ms. Sarah Rahman", "companyAddress": "", "jobSource": "LinkedIn", "tone": "formal" }
+
+// 201 Created
+{
+  "coverLetter": {
+    "id": "6acb0977c1e7433d3537b92f",
+    "improvedResumeId": "6acb02ce79dbe54bfe24a21c",
+    "analysisId": "6acb02ce79dbe54bfe24a21b",
+    "userId": "6acb02ce79dbe54bfe24a219",
+    "inputs": { "hiringManagerName": "Ms. Sarah Rahman", "companyAddress": "", "jobSource": "LinkedIn", "tone": "formal" },
+    "letter": {
+      "sender": { "fullName": "Demo Student", "email": "demo@resumind.dev", "phone": "[Add your phone number]",
+                  "address": "Khulna, Bangladesh", "linkedin": "" },
+      "date": "11 October 2026",
+      "recipient": { "name": "Ms. Sarah Rahman", "title": "Hiring Manager", "company": "Google", "address": "[Company address]" },
+      "subject": "Application for Junior Frontend Developer Position",
+      "salutation": "Dear Ms. Rahman,",
+      "opening": "Discovering the Junior Frontend Developer opening through LinkedIn…",
+      "body": [ "During my time as a Frontend Intern at Local Software Firm, I designed reusable React components…",
+                "I have long admired Google for [Mention something specific about Google]…" ],
+      "closing": "I would welcome the opportunity to discuss… Please find my Europass CV attached…",
+      "signOff": "Yours sincerely,",
+      "signatureName": "Demo Student",
+      "wordCount": 304,
+      "highlights": [ { "jobRequirement": "React", "resumeEvidence": "Designed reusable React components…",
+                        "cvSection": "Work Experience" } ]
+    },
+    "editedText": null,
+    "createdAt": "2026-10-11T03:58:47.611Z",
+    "updatedAt": "2026-10-11T03:58:47.611Z"
+  }
+}
+```
+Errors: `400` invalid input / no improved resume yet · `401` · `404` analysis not found / not yours ·
+`429` rate limit or daily quota · `502` Gemini failed · `503` key missing/invalid or model busy.
+
+#### `GET /api/resume/analysis/:analysisId/cover-letter` 🔒
+Returns the saved `{ coverLetter }` (same shape), or `404 "No cover letter yet for this analysis"`.
+
+#### `PUT /api/resume/analysis/:analysisId/cover-letter` 🔒 — save the user's edits
+```json
+// Request — the whole letter as plain text, paragraphs separated by blank lines (max 8000 characters)
+{ "editedText": "Demo Student\nKhulna, Bangladesh\n…\n\nDear Ms. Rahman,\n\n…" }
+// 200 OK → { "coverLetter": { …, "editedText": "Demo Student\n…", "updatedAt": "…" } }
+```
+An empty string resets to the generated letter (`editedText: null`). Errors: `400` too long / not text ·
+`404` no letter yet.
 
 ### 3.3 Try it with curl
 

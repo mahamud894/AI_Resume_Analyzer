@@ -17,7 +17,7 @@ app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 app.use(
     cors({
         origin: config.clientUrls,
-        methods: ["GET", "POST", "DELETE"],
+        methods: ["GET", "POST", "PUT", "DELETE"],
         allowedHeaders: ["Content-Type", "Authorization"],
     })
 );

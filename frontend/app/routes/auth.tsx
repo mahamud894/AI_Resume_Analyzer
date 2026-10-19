@@ -55,9 +55,9 @@ const Auth = () => {
     const message = formError || error;
 
     return (
-        <main className="bg-[url('/images/bg-auth.svg')] bg-cover min-h-screen flex items-center justify-center">
-            <div className="gradient-border shadow-lg max-md:mx-4">
-                <section className="flex flex-col gap-8 bg-white rounded-2xl p-10 max-sm:p-6">
+        <main className="bg-[url('/images/bg-auth.svg')] bg-cover min-h-screen flex items-center justify-center !pt-0 px-4 py-8 sm:px-6">
+            <div className="gradient-border shadow-lg w-full max-w-[700px]">
+                <section className="flex flex-col gap-6 sm:gap-8 bg-white rounded-2xl p-5 sm:p-10">
                     <div className="flex flex-col items-center gap-2 text-center">
                         <h1>{mode === 'login' ? 'Welcome Back' : 'Create Account'}</h1>
                         <h2>
@@ -67,7 +67,7 @@ const Auth = () => {
                         </h2>
                     </div>
 
-                    <form key={mode} onSubmit={handleSubmit} className="flex flex-col gap-4 w-[600px] max-md:w-full">
+                    <form key={mode} onSubmit={handleSubmit} className="flex flex-col gap-4 w-full">
                         {mode === 'signup' && (
                             <div className="form-div">
                                 <label htmlFor="username">Username</label>
@@ -110,9 +110,9 @@ const Auth = () => {
                         </button>
                     </form>
 
-                    <p className="text-center text-dark-200">
+                    <p className="text-center text-dark-200 flex flex-wrap items-center justify-center gap-x-1">
                         {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
-                        <button type="button" className="font-semibold text-gradient cursor-pointer"
+                        <button type="button" className="font-semibold text-gradient cursor-pointer min-h-11 px-1"
                                 onClick={() => switchMode(mode === 'login' ? 'signup' : 'login')}>
                             {mode === 'login' ? 'Sign Up' : 'Log In'}
                         </button>

@@ -39,31 +39,49 @@ const Resume = () => {
                     <span className="text-gray-800 text-sm font-semibold">Back to Homepage</span>
                 </Link>
             </nav>
-            <div className="flex flex-row w-full max-lg:flex-col-reverse">
-                <section className="feedback-section bg-[url('/images/bg-small.svg')] bg-cover h-[100vh] sticky top-0 items-center justify-center">
+            {/* Phone/tablet: feedback first, small preview below. Desktop: side by side with a sticky preview. */}
+            <div className="flex flex-col-reverse lg:flex-row w-full">
+                <section className="feedback-section bg-[url('/images/bg-small.svg')] bg-cover items-center justify-center lg:h-screen lg:sticky lg:top-0">
+                    <h3 className="lg:hidden self-start text-xl font-bold text-black">Your resume</h3>
                     {imageUrl && resumeUrl && (
-                        <div className="animate-in fade-in duration-1000 gradient-border max-sm:m-0 h-[90%] max-wxl:h-fit w-fit">
-                            <a href={resumeUrl} target="_blank" rel="noopener noreferrer">
+                        <div className="animate-in fade-in duration-1000 gradient-border w-fit max-w-full lg:h-[90%]">
+                            <a href={resumeUrl} target="_blank" rel="noopener noreferrer" aria-label="Open the resume PDF in a new tab" className="block h-full">
                                 <img
                                     src={imageUrl}
-                                    className="w-full h-full object-contain rounded-2xl"
-                                    title="resume"
+                                    className="w-auto max-w-full max-h-[360px] sm:max-h-[480px] lg:max-h-none h-auto lg:h-full object-contain rounded-2xl"
+                                    alt="Preview of your resume"
                                 />
                             </a>
                         </div>
                     )}
-                    {!imageUrl && resumeUrl && (
-                        <a href={resumeUrl} target="_blank" rel="noopener noreferrer" className="primary-button w-fit">
-                            Open {resume?.originalName}
+                    {resumeUrl && (
+                        <a href={resumeUrl} target="_blank" rel="noopener noreferrer"
+                           className={`primary-button w-full sm:w-fit px-6 ${imageUrl ? 'lg:hidden' : ''}`}>
+                            Open PDF
                         </a>
                     )}
                 </section>
                 <section className="feedback-section">
-                    <h2 className="text-4xl !text-black font-bold">Resume Review</h2>
-                    {analysis && (
-                        <p className="text-gray-500 -mt-6">
-                            {[analysis.companyName, analysis.jobTitle].filter(Boolean).join(' — ')}
-                        </p>
+                    <div className="flex flex-col gap-1">
+                        <h2 className="text-3xl sm:text-4xl !text-black font-bold">Resume Review</h2>
+                        {analysis && (
+                            <p className="text-gray-500 break-words">
+                                {[analysis.companyName, analysis.jobTitle].filter(Boolean).join(' — ')}
+                            </p>
+                        )}
+                    </div>
+                    {resume && analysis && (
+                        <div className="flex flex-col sm:flex-row gap-3">
+                            <Link to={`/resume/${resume.id}/improved/${analysis.id}`} className="primary-button sm:w-fit text-lg px-6">
+                                {analysis.improved ? 'View Improved Resume' : 'Improve My Resume (Europass)'}
+                            </Link>
+                            {analysis.improved && (
+                                <Link to={`/resume/${resume.id}/improved/${analysis.id}/cover-letter`}
+                                      className="secondary-button sm:w-fit text-lg px-6 border-[#0b4ea2] text-[#0b4ea2] font-medium hover:bg-blue-50">
+                                    Cover Letter
+                                </Link>
+                            )}
+                        </div>
                     )}
                     {error ? (
                         <p className="rounded-2xl bg-red-50 border border-red-200 text-red-700 px-4 py-3">{error}</p>
@@ -76,7 +94,7 @@ const Resume = () => {
                     ) : resume ? (
                         <p className="text-gray-500">This resume has not been analyzed yet.</p>
                     ) : (
-                        <img src="/images/resume-scan-2.gif" className="w-full" />
+                        <img src="/images/resume-scan-2.gif" alt="Loading" className="w-full max-w-sm mx-auto" />
                     )}
                 </section>
             </div>

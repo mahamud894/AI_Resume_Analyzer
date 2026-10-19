@@ -54,6 +54,7 @@ const analysisSchema = new mongoose.Schema(
     {
         timestamps: { createdAt: true, updatedAt: false },
         toJSON: {
+            virtuals: true,
             transform(_doc, ret) {
                 ret.id = ret._id.toString();
                 delete ret._id;
@@ -63,5 +64,14 @@ const analysisSchema = new mongoose.Schema(
         },
     }
 );
+
+// The Europass version generated from this analysis (0 or 1). Only included when populated,
+// e.g. .populate({ path: "improved", select: "analysisId createdAt" })
+analysisSchema.virtual("improved", {
+    ref: "ImprovedResume",
+    localField: "_id",
+    foreignField: "analysisId",
+    justOne: true,
+});
 
 export default mongoose.model("Analysis", analysisSchema);

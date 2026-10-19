@@ -1,12 +1,19 @@
 import Analysis from "../models/Analysis.js";
+import CoverLetter from "../models/CoverLetter.js";
+import ImprovedResume from "../models/ImprovedResume.js";
 import Resume from "../models/Resume.js";
 import { analyzeResume } from "../services/geminiService.js";
 import { extractPdfText } from "../services/pdfService.js";
 import ApiError from "../utils/ApiError.js";
 import { isRealPdf, removeFiles, toAbsolutePath, toStoredPath } from "../utils/files.js";
 
-// Newest analysis first whenever we populate a resume's analyses
-const populateAnalyses = { path: "analyses", options: { sort: { createdAt: -1 } } };
+// Newest analysis first whenever we populate a resume's analyses.
+// Each analysis also gets `improved: { id, analysisId, createdAt }` if a Europass version exists.
+const populateAnalyses = {
+    path: "analyses",
+    options: { sort: { createdAt: -1 } },
+    populate: { path: "improved", select: "analysisId createdAt" },
+};
 
 // Finds a resume that belongs to the logged-in user, or throws 404.
 // (Returning 404 instead of 403 for other users' resumes hides that the id exists.)
@@ -98,10 +105,14 @@ export async function getResumeImage(req, res) {
     res.sendFile(toAbsolutePath(resume.imagePath));
 }
 
-// DELETE /api/resume/:id   → removes the resume, all its analyses and the files on disk
+// DELETE /api/resume/:id   → removes the resume, all its analyses, improved versions,
+// cover letters and the files on disk
 export async function deleteResume(req, res) {
     const resume = await findOwnResume(req.params.id, req.user._id);
 
+    const analysisIds = await Analysis.find({ resumeId: resume._id }).distinct("_id");
+    await CoverLetter.deleteMany({ analysisId: { $in: analysisIds } });
+    await ImprovedResume.deleteMany({ resumeId: resume._id });
     await Analysis.deleteMany({ resumeId: resume._id });
     await resume.deleteOne();
     await removeFiles(resume.filePath, resume.imagePath);

@@ -13,6 +13,8 @@ import bcrypt from "../backend/node_modules/bcryptjs/index.js";
 import config from "../backend/src/config/env.js";
 import { connectDB, disconnectDB } from "../backend/src/config/db.js";
 import Analysis from "../backend/src/models/Analysis.js";
+import ImprovedResume from "../backend/src/models/ImprovedResume.js";
+import CoverLetter from "../backend/src/models/CoverLetter.js";
 import Resume from "../backend/src/models/Resume.js";
 import User from "../backend/src/models/User.js";
 import { removeFiles, toStoredPath } from "../backend/src/utils/files.js";
@@ -74,6 +76,8 @@ async function seed() {
     if (old) {
         const oldResumes = await Resume.find({ userId: old._id });
         for (const r of oldResumes) await removeFiles(r.filePath, r.imagePath);
+        await CoverLetter.deleteMany({ userId: old._id });
+        await ImprovedResume.deleteMany({ userId: old._id });
         await Analysis.deleteMany({ userId: old._id });
         await Resume.deleteMany({ userId: old._id });
         await old.deleteOne();
@@ -117,10 +121,31 @@ async function seed() {
         createdAt: new Date(data.analysis.createdAt),
     });
 
+    // 6. Improved resume (Europass) generated from that analysis
+    const improved = await ImprovedResume.create({
+        ...data.improvedResume,
+        analysisId: analysis._id,
+        resumeId: resume._id,
+        userId: user._id,
+        createdAt: new Date(data.improvedResume.createdAt),
+    });
+
+    // 7. Cover letter written from that improved resume (implements cover_letter_text of the ERD)
+    const coverLetter = await CoverLetter.create({
+        ...data.coverLetter,
+        improvedResumeId: improved._id,
+        analysisId: analysis._id,
+        userId: user._id,
+        createdAt: new Date(data.coverLetter.createdAt),
+        updatedAt: new Date(data.coverLetter.createdAt),
+    });
+
     console.log("🌱 Seed complete:");
     console.log(`   user     ${user.id}  (${data.user.email} / ${data.user.password})`);
     console.log(`   resume   ${resume.id}`);
     console.log(`   analysis ${analysis.id}  (overall score ${analysis.feedback.overallScore})`);
+    console.log(`   improved ${improved.id}  (Europass CV, ${improved.changes.length} changes)`);
+    console.log(`   letter   ${coverLetter.id}  (cover letter, ${coverLetter.letter.wordCount} words)`);
 }
 
 try {

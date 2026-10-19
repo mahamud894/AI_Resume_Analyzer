@@ -47,8 +47,8 @@ const CategoryHeader = ({
   categoryScore: number;
 }) => {
   return (
-      <div className="flex flex-row gap-4 items-center py-2">
-        <p className="text-2xl font-semibold">{title}</p>
+      <div className="flex flex-row flex-wrap gap-x-4 gap-y-1 items-center py-1 sm:py-2">
+        <p className="text-lg sm:text-2xl font-semibold">{title}</p>
         <ScoreBadge score={categoryScore} />
       </div>
   );
@@ -61,17 +61,17 @@ const CategoryContent = ({
 }) => {
   return (
       <div className="flex flex-col gap-4 items-center w-full">
-        <div className="bg-gray-50 w-full rounded-lg px-5 py-4 grid grid-cols-2 gap-4">
+        <div className="bg-gray-50 w-full rounded-lg px-4 sm:px-5 py-4 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           {tips.map((tip, index) => (
-              <div className="flex flex-row gap-2 items-center" key={index}>
+              <div className="flex flex-row gap-2 items-start" key={index}>
                 <img
                     src={
                       tip.type === "good" ? "/icons/check.svg" : "/icons/warning.svg"
                     }
                     alt="score"
-                    className="size-5"
+                    className="size-5 shrink-0 mt-0.5 sm:mt-1"
                 />
-                <p className="text-xl text-gray-500 ">{tip.tip}</p>
+                <p className="text-base sm:text-xl text-gray-500 min-w-0">{tip.tip}</p>
               </div>
           ))}
         </div>
@@ -86,7 +86,7 @@ const CategoryContent = ({
                           : "bg-yellow-50 border border-yellow-200 text-yellow-700"
                   )}
               >
-                <div className="flex flex-row gap-2 items-center">
+                <div className="flex flex-row gap-2 items-start">
                   <img
                       src={
                         tip.type === "good"
@@ -94,9 +94,9 @@ const CategoryContent = ({
                             : "/icons/warning.svg"
                       }
                       alt="score"
-                      className="size-5"
+                      className="size-5 shrink-0 mt-0.5 sm:mt-1"
                   />
-                  <p className="text-xl font-semibold">{tip.tip}</p>
+                  <p className="text-lg sm:text-xl font-semibold min-w-0">{tip.tip}</p>
                 </div>
                 <p>{tip.explanation}</p>
               </div>

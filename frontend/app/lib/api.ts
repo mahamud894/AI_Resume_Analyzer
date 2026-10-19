@@ -28,7 +28,7 @@ export const setUnauthorizedHandler = (handler: () => void) => {
 };
 
 type RequestOptions = {
-    method?: "GET" | "POST" | "DELETE";
+    method?: "GET" | "POST" | "PUT" | "DELETE";
     json?: unknown;
     formData?: FormData;
 };
@@ -93,4 +93,19 @@ export const resumeApi = {
     list: () => request<{ resumes: Resume[] }>("/api/resume"),
     get: (id: string) => request<{ resume: Resume }>(`/api/resume/${id}`),
     remove: (id: string) => request<{ message: string; id: string }>(`/api/resume/${id}`, { method: "DELETE" }),
+    // Europass "Improve My Resume"
+    improve: (analysisId: string) =>
+        request<{ improved: ImprovedResume }>(`/api/resume/analysis/${analysisId}/improve`, { method: "POST" }),
+    getImproved: (analysisId: string) =>
+        request<{ improved: ImprovedResume }>(`/api/resume/analysis/${analysisId}/improved`),
+    // Save inline CV edits; null = reset to the AI version
+    saveImproved: (analysisId: string, europassCv: EuropassCv | null) =>
+        request<{ improved: ImprovedResume }>(`/api/resume/analysis/${analysisId}/improved`, { method: "PUT", json: { europassCv } }),
+    // Cover letter
+    generateCoverLetter: (analysisId: string, inputs: CoverLetterInputs) =>
+        request<{ coverLetter: CoverLetter }>(`/api/resume/analysis/${analysisId}/cover-letter`, { method: "POST", json: inputs }),
+    getCoverLetter: (analysisId: string) =>
+        request<{ coverLetter: CoverLetter }>(`/api/resume/analysis/${analysisId}/cover-letter`),
+    saveCoverLetter: (analysisId: string, editedText: string) =>
+        request<{ coverLetter: CoverLetter }>(`/api/resume/analysis/${analysisId}/cover-letter`, { method: "PUT", json: { editedText } }),
 };
