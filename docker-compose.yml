@@ -13,8 +13,6 @@ services:
       CLIENT_URL: http://localhost:3000
     ports:
       - "5000:5000"
-    volumes:
-      - uploads:/app/uploads
     restart: unless-stopped
 
   frontend:
@@ -32,7 +30,3 @@ services:
       backend:
         condition: service_healthy
     restart: unless-stopped
-
-volumes:
-  # Keeps uploaded resumes when containers are rebuilt
-  uploads:

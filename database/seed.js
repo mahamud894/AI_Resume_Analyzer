@@ -10,14 +10,13 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import bcrypt from "../backend/node_modules/bcryptjs/index.js";
-import config from "../backend/src/config/env.js";
 import { connectDB, disconnectDB } from "../backend/src/config/db.js";
 import Analysis from "../backend/src/models/Analysis.js";
 import ImprovedResume from "../backend/src/models/ImprovedResume.js";
 import CoverLetter from "../backend/src/models/CoverLetter.js";
 import Resume from "../backend/src/models/Resume.js";
 import User from "../backend/src/models/User.js";
-import { removeFiles, toStoredPath } from "../backend/src/utils/files.js";
+import { deleteFiles, saveFile } from "../backend/src/services/fileStorage.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const data = JSON.parse(await fs.readFile(path.join(__dirname, "sample-data.json"), "utf8"));
@@ -75,7 +74,7 @@ async function seed() {
     const old = await User.findOne({ email: data.user.email });
     if (old) {
         const oldResumes = await Resume.find({ userId: old._id });
-        for (const r of oldResumes) await removeFiles(r.filePath, r.imagePath);
+        await deleteFiles(...oldResumes.flatMap((r) => [r.fileId, r.imageId]));
         await CoverLetter.deleteMany({ userId: old._id });
         await ImprovedResume.deleteMany({ userId: old._id });
         await Analysis.deleteMany({ userId: old._id });
@@ -91,23 +90,17 @@ async function seed() {
         passwordHash: await bcrypt.hash(data.user.password, 10),
     });
 
-    // 3. Files on disk: generated PDF + a preview image from the frontend's public folder
-    await fs.mkdir(config.uploadDir, { recursive: true });
-    const stamp = Date.now();
-    const pdfPath = path.join(config.uploadDir, `${stamp}-seed-resume.pdf`);
-    const imagePath = path.join(config.uploadDir, `${stamp}-seed-resume.png`);
+    // 3. Files in MongoDB GridFS (like a real upload): generated PDF + a preview image from the frontend
     const pdfBuffer = buildSamplePdf(RESUME_LINES);
-    await fs.writeFile(pdfPath, pdfBuffer);
-    await fs.copyFile(
-        path.join(__dirname, "..", "frontend", "public", "images", "resume_01.png"),
-        imagePath
-    );
+    const imageBuffer = await fs.readFile(path.join(__dirname, "..", "frontend", "public", "images", "resume_01.png"));
+    const fileId = await saveFile(pdfBuffer, { filename: "seed-resume.pdf", contentType: "application/pdf", userId: user._id });
+    const imageId = await saveFile(imageBuffer, { filename: "seed-resume.png", contentType: "image/png", userId: user._id });
 
     // 4. Resume document
     const resume = await Resume.create({
         userId: user._id,
-        filePath: toStoredPath(pdfPath),
-        imagePath: toStoredPath(imagePath),
+        fileId,
+        imageId,
         originalName: data.resume.originalName,
         fileSize: pdfBuffer.length,
         uploadDate: new Date(data.resume.uploadDate),

@@ -35,11 +35,6 @@ export function errorHandler(err, _req, res, _next) {
     } else if (err.type === "entity.parse.failed") {
         status = 400;
         message = "Request body is not valid JSON";
-    } else if (err.code === "ENOENT" && status === 404) {
-        // res.sendFile() on a missing upload (it already marks the error 404): its message contains the
-        // server's file path, so never send it. Other ENOENTs stay 500 so they are logged.
-        status = 404;
-        message = "File not found";
     }
 
     // Unexpected errors (bugs, crashes) are logged; in production their details stay hidden.

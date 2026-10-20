@@ -5,8 +5,8 @@ import ImprovedResume from "../models/ImprovedResume.js";
 import Resume from "../models/Resume.js";
 import User from "../models/User.js";
 import ApiError from "../utils/ApiError.js";
+import { deleteFiles } from "../services/fileStorage.js";
 import { verifyGoogleToken } from "../services/googleAuthService.js";
-import { removeFiles } from "../utils/files.js";
 import { signToken } from "../utils/token.js";
 
 const SALT_ROUNDS = 10;
@@ -136,7 +136,7 @@ export async function deleteAccount(req, res) {
         [CoverLetter, ImprovedResume, Analysis, Resume].map((Model) => Model.deleteMany({ userId: user._id }))
     );
     await user.deleteOne();
-    await removeFiles(...resumes.flatMap((r) => [r.filePath, r.imagePath]));
+    await deleteFiles(...resumes.flatMap((r) => [r.fileId, r.imageId]));
 
     res.json({ message: "Account deleted" });
 }

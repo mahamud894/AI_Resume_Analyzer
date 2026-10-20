@@ -10,6 +10,11 @@ import resumeRoutes from "./routes/resumeRoutes.js";
 
 const app = express();
 
+// On Render requests arrive through one proxy (TRUST_PROXY=1 there). Trusting it makes req.ip the visitor's
+// real IP, so the login rate limit counts each visitor separately instead of everyone as the proxy.
+// Off by default: without a proxy in front, a client could fake X-Forwarded-For to dodge the limit.
+if (config.trustProxy) app.set("trust proxy", config.trustProxy);
+
 // Security headers. "cross-origin" lets the frontend (another port) load the PDF/image responses.
 app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 

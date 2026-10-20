@@ -50,9 +50,9 @@ backend/
 │   └── utils/
 │       ├── ApiError.js        # Error with an HTTP status code
 │       ├── token.js           # sign / verify JWT
-│       └── files.js           # upload path helpers, PDF magic-byte check
 ├── tests/                     # Vitest + Supertest API tests (in-memory MongoDB, Gemini mocked)
-├── uploads/                   # Uploaded PDFs + preview images (git-ignored)
+├── scripts/
+│   └── migrate-uploads-to-gridfs.js  # one-time move of old backend/uploads/ files into GridFS
 ├── .env.example               # Template for your .env
 ├── Dockerfile                 # Production image (used by ../docker-compose.yml)
 └── package.json
@@ -279,7 +279,7 @@ Return the raw PDF / PNG. Because they need the `Authorization` header, the fron
 with `fetch`, then shows them using `URL.createObjectURL(blob)`.
 
 #### `DELETE /api/resume/:id` 🔒
-Deletes the resume, **all its analyses**, their improved resumes and cover letters, and both files on disk.
+Deletes the resume, **all its analyses**, their improved resumes and cover letters, and both stored files (GridFS).
 ```json
 { "message": "Resume deleted", "id": "6aca15131f91ced92f7ef8c2" }
 ```
@@ -481,7 +481,7 @@ curl -X POST http://localhost:5000/api/resume/analyze -H "Authorization: Bearer 
 | Reading other users' data      | Every query filters by `userId = req.user._id`; others get `404`           |
 | Password guessing              | `express-rate-limit`: 20 login/register attempts per 15 min per IP         |
 | Using up the Gemini quota      | `express-rate-limit`: 15 AI requests (analyze + improve + cover letter) per hour per user → `429` |
-| Malicious uploads              | PDF-only (extension + MIME + `%PDF-` magic bytes), 10 MB limit, max 2 files, random server-side file names |
+| Malicious uploads              | PDF-only (extension + MIME + `%PDF-` magic bytes), 10 MB limit, max 2 files; files stored in MongoDB GridFS, never on the server disk |
 | Bad input / NoSQL injection    | `express-validator` on all bodies and ids; Mongoose `strictQuery`          |
 | Cross-site requests            | CORS allows only `CLIENT_URL`                                              |
 | Common HTTP attacks            | `helmet` security headers; JSON body limited to 1 MB                       |

@@ -16,8 +16,8 @@ the relationships between collections and the indexes.
 │──────────────│            │──────────────│            │──────────────│
 │ _id (PK)     │            │ _id (PK)     │            │ _id (PK)     │
 │ username     │            │ userId (FK)  │            │ resumeId (FK)│
-│ email        │            │ filePath     │            │ userId (FK)  │
-│ passwordHash │            │ imagePath    │            │ companyName  │
+│ email        │            │ fileId (FK)  │            │ userId (FK)  │
+│ passwordHash │            │ imageId (FK) │            │ companyName  │
 │ createdAt    │            │ originalName │            │ jobTitle     │
 └──────────────┘            │ fileSize     │            │ jobDescription│
         │                   │ uploadDate   │            │ feedback {…} │
@@ -96,13 +96,17 @@ improved resumes, cover letters and files (see `deleteResume` in `resumeControll
 |----------------|----------|----------|------------------------------------------------------------------|
 | `_id`          | ObjectId | auto     | Primary key                                                      |
 | `userId`       | ObjectId | yes      | References `users._id`                                           |
-| `filePath`     | String   | yes      | PDF location relative to `backend/`, e.g. `uploads/1720…-ab12.pdf` |
-| `imagePath`    | String   | no       | PNG preview of page 1 (made in the browser with pdf.js), or `null` |
+| `fileId`       | ObjectId | yes      | The PDF in GridFS: references `uploads.files._id`                 |
+| `imageId`      | ObjectId | no       | PNG preview of page 1 (made in the browser with pdf.js) in GridFS, or `null` |
 | `originalName` | String   | yes      | File name the user uploaded (max 255)                            |
 | `fileSize`     | Number   | yes      | Bytes (max 10 MB by default)                                     |
 | `uploadDate`   | Date     | auto     | Defaults to now                                                  |
 
-The API never exposes `filePath`/`imagePath`. Instead it returns the virtual fields
+**File storage (GridFS):** the files themselves live in MongoDB, in the GridFS bucket `uploads`
+(collections `uploads.files` for the file info and `uploads.chunks` for the 255 KB pieces), so they survive
+server restarts and redeploys. Each file's `metadata` holds its `contentType` and owner `userId`.
+
+The API never exposes `fileId`/`imageId`. Instead it returns the virtual fields
 `fileUrl` (`/api/resume/:id/file`) and `imageUrl` (`/api/resume/:id/image`), which are protected by JWT.
 `analyses` is a Mongoose **virtual populate** (not stored): it loads all analyses whose `resumeId` matches.
 
@@ -292,8 +296,8 @@ Mongoose creates these automatically on startup (`autoIndex`). You can see them 
 {
   "_id": { "$oid": "66f1a2b3c4d5e6f708192a3c" },
   "userId": { "$oid": "66f1a2b3c4d5e6f708192a3b" },
-  "filePath": "uploads/1782900000000-seed-resume.pdf",
-  "imagePath": "uploads/1782900000000-seed-resume.png",
+  "fileId": { "$oid": "66f1a2b3c4d5e6f708192a50" },
+  "imageId": { "$oid": "66f1a2b3c4d5e6f708192a51" },
   "originalName": "demo-resume.pdf",
   "fileSize": 1661,
   "uploadDate": { "$date": "2026-07-01T10:00:00.000Z" }
@@ -369,5 +373,5 @@ npm run seed      # runs ../database/seed.js with backend/.env
 ```
 
 This creates the demo account **demo@resumind.dev / Demo@1234** with one resume (a generated PDF +
-preview image in `backend/uploads/`), one analysis, one improved Europass resume and one cover letter.
+preview image, both stored in GridFS), one analysis, one improved Europass resume and one cover letter.
 Running it again replaces the old demo data.

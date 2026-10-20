@@ -9,9 +9,10 @@ const resumeSchema = new mongoose.Schema(
             required: true,
             index: true,
         },
-        // Paths are relative to the backend/ folder, e.g. "uploads/1720000000000-ab12cd.pdf"
-        filePath: { type: String, required: true },
-        imagePath: { type: String, default: null },
+        // The PDF and its page-1 preview are stored in MongoDB GridFS (bucket "uploads", see
+        // services/fileStorage.js); these are their ids in uploads.files
+        fileId: { type: mongoose.Schema.Types.ObjectId, required: true },
+        imageId: { type: mongoose.Schema.Types.ObjectId, default: null },
         originalName: { type: String, required: true, maxlength: 255 },
         fileSize: { type: Number, required: true },
         uploadDate: { type: Date, default: Date.now },
@@ -23,9 +24,9 @@ const resumeSchema = new mongoose.Schema(
                 ret.id = ret._id.toString();
                 delete ret._id;
                 delete ret.__v;
-                // Hide server disk paths; the client uses fileUrl / imageUrl instead.
-                delete ret.filePath;
-                delete ret.imagePath;
+                // Internal storage ids; the client uses the protected fileUrl / imageUrl instead.
+                delete ret.fileId;
+                delete ret.imageId;
                 return ret;
             },
         },
@@ -40,7 +41,7 @@ resumeSchema.virtual("fileUrl").get(function () {
     return `/api/resume/${this._id}/file`;
 });
 resumeSchema.virtual("imageUrl").get(function () {
-    return this.imagePath ? `/api/resume/${this._id}/image` : null;
+    return this.imageId ? `/api/resume/${this._id}/image` : null;
 });
 
 // "Virtual populate": lets us load all Analyses of a Resume with .populate("analyses")

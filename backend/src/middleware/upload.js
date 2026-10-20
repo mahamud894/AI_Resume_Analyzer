@@ -1,28 +1,19 @@
 // Multer configuration for resume uploads.
 //   field "resume" → required, PDF only
 //   field "image"  → optional PNG/JPEG preview of page 1 (generated in the browser by pdf.js)
-import crypto from "node:crypto";
-import fs from "node:fs";
+// Files are kept in memory (max 10 MB each) and the controller saves them to MongoDB GridFS,
+// so nothing is written to the server disk.
 import path from "node:path";
 import multer from "multer";
 import config from "../config/env.js";
 import ApiError from "../utils/ApiError.js";
-
-fs.mkdirSync(config.uploadDir, { recursive: true });
 
 const ALLOWED = {
     resume: { mimes: ["application/pdf"], exts: [".pdf"] },
     image: { mimes: ["image/png", "image/jpeg"], exts: [".png", ".jpg", ".jpeg"] },
 };
 
-const storage = multer.diskStorage({
-    destination: config.uploadDir,
-    // Never trust the user's file name — generate our own random one.
-    filename: (_req, file, cb) => {
-        const ext = path.extname(file.originalname).toLowerCase();
-        cb(null, `${Date.now()}-${crypto.randomBytes(8).toString("hex")}${ext}`);
-    },
-});
+const storage = multer.memoryStorage();
 
 function fileFilter(_req, file, cb) {
     const rule = ALLOWED[file.fieldname];

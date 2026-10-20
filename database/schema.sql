@@ -43,8 +43,8 @@ CREATE TABLE users (
 CREATE TABLE resumes (
     id             CHAR(24)      NOT NULL,
     user_id        CHAR(24)      NOT NULL,
-    file_path      VARCHAR(500)  NOT NULL,            -- e.g. uploads/1720000000000-ab12.pdf
-    image_path     VARCHAR(500)  NULL,                -- PNG preview of page 1
+    file_id        CHAR(24)      NOT NULL,            -- the PDF in MongoDB GridFS (uploads.files._id)
+    image_id       CHAR(24)      NULL,                -- PNG preview of page 1 in GridFS
     original_name  VARCHAR(255)  NOT NULL,
     file_size      INTEGER       NOT NULL,            -- bytes
     upload_date    TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -175,9 +175,9 @@ INSERT INTO users (id, username, email, password_hash, created_at) VALUES
 ('66f1a2b3c4d5e6f708192a3b', 'demo_student', 'demo@resumind.dev',
  '$2b$10$LfqMD35PaZ56Yrm61VxXn.Zl.n47.CJ/OqMO22vvBOh1FUplzJZE2', '2026-07-01 09:58:00');
 
-INSERT INTO resumes (id, user_id, file_path, image_path, original_name, file_size, upload_date) VALUES
+INSERT INTO resumes (id, user_id, file_id, image_id, original_name, file_size, upload_date) VALUES
 ('66f1a2b3c4d5e6f708192a3c', '66f1a2b3c4d5e6f708192a3b',
- 'uploads/1782900000000-seed-resume.pdf', 'uploads/1782900000000-seed-resume.png',
+ '66f1a2b3c4d5e6f708192a50', '66f1a2b3c4d5e6f708192a51',
  'demo-resume.pdf', 1661, '2026-07-01 10:00:00');
 
 INSERT INTO analyses (id, resume_id, user_id, company_name, job_title, job_description, overall_score, feedback, created_at) VALUES

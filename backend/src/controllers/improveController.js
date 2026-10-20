@@ -3,9 +3,9 @@ import "../models/CoverLetter.js"; // registers the model used by populate("cove
 import ImprovedResume from "../models/ImprovedResume.js";
 import Resume from "../models/Resume.js";
 import { improveResume, normalizeEuropassCv } from "../services/europassService.js";
+import { readFile } from "../services/fileStorage.js";
 import { extractPdfText } from "../services/pdfService.js";
 import ApiError from "../utils/ApiError.js";
-import { toAbsolutePath } from "../utils/files.js";
 
 // Adds `coverLetter: { id, improvedResumeId, updatedAt }` if a cover letter exists
 const populateCoverLetter = { path: "coverLetter", select: "improvedResumeId updatedAt" };
@@ -24,7 +24,7 @@ export async function improve(req, res) {
     const resume = await Resume.findOne({ _id: analysis.resumeId, userId: req.user._id });
     if (!resume) throw ApiError.notFound("Resume not found");
 
-    const resumeText = await extractPdfText(toAbsolutePath(resume.filePath));
+    const resumeText = await extractPdfText(await readFile(resume.fileId));
     if (resumeText.length < 50) {
         throw new ApiError(422, "Could not read enough text from this PDF to rewrite it.");
     }

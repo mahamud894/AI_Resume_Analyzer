@@ -1,8 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import fs from "node:fs/promises";
-import config from "../src/config/env.js";
 import Resume from "../src/models/Resume.js";
-import { app, clearDb, createUser, request, startDb, stopDb, uploadPdf } from "./helpers.js";
+import { deleteFiles } from "../src/services/fileStorage.js";
+import { app, clearDb, countStoredFiles, createUser, FAKE_PDF, request, startDb, stopDb, uploadPdf } from "./helpers.js";
 
 beforeAll(startDb);
 afterAll(stopDb);
@@ -14,13 +13,38 @@ describe("POST /api/resume/upload", () => {
         expect(res.status).toBe(401);
     });
 
-    it("accepts a real PDF and hides the server file path", async () => {
+    it("accepts a real PDF and hides the internal storage ids", async () => {
         const { auth } = await createUser();
         const resume = await uploadPdf(auth);
 
         expect(resume.originalName).toBe("cv.pdf");
         expect(resume.fileUrl).toBe(`/api/resume/${resume.id}/file`);
-        expect(resume.filePath).toBeUndefined();
+        expect(resume.fileId).toBeUndefined();
+        expect(await countStoredFiles()).toBe(1);
+    });
+
+    it("stores the PDF and preview in GridFS and serves back the same bytes", async () => {
+        const { auth } = await createUser();
+        const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3, 4]);
+        const up = await request(app)
+            .post("/api/resume/upload")
+            .set("Authorization", auth)
+            .attach("resume", FAKE_PDF, { filename: "cv.pdf", contentType: "application/pdf" })
+            .attach("image", png, { filename: "cv.png", contentType: "image/png" });
+        const { id } = up.body.resume;
+        expect(await countStoredFiles()).toBe(2);
+
+        const pdf = await request(app).get(`/api/resume/${id}/file`).set("Authorization", auth).buffer(true)
+            .parse((res, cb) => { const d = []; res.on("data", (c) => d.push(c)); res.on("end", () => cb(null, Buffer.concat(d))); });
+        expect(pdf.status).toBe(200);
+        expect(pdf.headers["content-type"]).toBe("application/pdf");
+        expect(pdf.headers["content-disposition"]).toContain("cv.pdf");
+        expect(Buffer.compare(pdf.body, FAKE_PDF)).toBe(0);
+
+        const img = await request(app).get(`/api/resume/${id}/image`).set("Authorization", auth);
+        expect(img.status).toBe(200);
+        expect(img.headers["content-type"]).toBe("image/png");
+        expect(Buffer.compare(img.body, png)).toBe(0);
     });
 
     it("rejects a non-PDF file", async () => {
@@ -92,6 +116,7 @@ describe("DELETE /api/resume/:id", () => {
         const after = await request(app).get(`/api/resume/${resume.id}`).set("Authorization", auth);
 
         expect(del.status).toBe(200);
+        expect(await countStoredFiles()).toBe(0); // the PDF is removed from GridFS too
         expect(after.status).toBe(404);
     });
 });
@@ -110,7 +135,7 @@ describe("DELETE /api/auth/me", () => {
         const bob = await createUser();
         const aliceResume = await uploadPdf(alice.auth);
         const bobResume = await uploadPdf(bob.auth);
-        const filesBefore = (await fs.readdir(config.uploadDir)).length;
+        expect(await countStoredFiles()).toBe(2);
 
         const res = await request(app)
             .delete("/api/auth/me")
@@ -120,24 +145,24 @@ describe("DELETE /api/auth/me", () => {
         expect(res.status).toBe(200);
         expect((await request(app).get("/api/auth/me").set("Authorization", alice.auth)).status).toBe(401);
         expect(await Resume.findById(aliceResume.id)).toBeNull();
-        expect((await fs.readdir(config.uploadDir)).length).toBe(filesBefore - 1);
+        expect(await countStoredFiles()).toBe(1); // only Bob's file is left
 
         const bobView = await request(app).get(`/api/resume/${bobResume.id}`).set("Authorization", bob.auth);
         expect(bobView.status).toBe(200);
     });
 });
 
-describe("missing files on disk", () => {
-    it("answers 404 without leaking the server's file path", async () => {
+describe("missing stored files", () => {
+    it("answers a JSON 404 when the PDF is gone from storage", async () => {
         const { auth } = await createUser();
         const resume = await uploadPdf(auth);
         const stored = await Resume.findById(resume.id);
-        await fs.rm(`${config.uploadDir}/${stored.filePath.split("/").pop()}`);
+        await deleteFiles(stored.fileId);
 
         const res = await request(app).get(`/api/resume/${resume.id}/file`).set("Authorization", auth);
 
         expect(res.status).toBe(404);
         expect(res.body.message).toBe("File not found");
-        expect(JSON.stringify(res.body)).not.toMatch(/uploads|ENOENT/);
+        expect(res.headers["content-type"]).toMatch(/json/);
     });
 });

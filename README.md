@@ -51,11 +51,12 @@ Every analysis is stored, so users can track all their applications in one dashb
 ┌──────────────────────────┐   HTTPS + JSON    ┌───────────────────────────┐   Mongoose   ┌─────────────────┐
 │  Frontend (React 19)     │  Authorization:   │  Backend (Express 5)      │ ───────────▶ │  MongoDB Atlas  │
 │  React Router · Tailwind │  Bearer <JWT>     │  REST API · JWT · Multer  │              │ users / resumes │
-│  Zustand · pdf.js        │ ────────────────▶ │  pdf-parse · validation   │              │ / analyses      │
-│  localhost:5173          │ ◀──────────────── │  localhost:5000           │              └─────────────────┘
+│  Zustand · pdf.js        │ ────────────────▶ │  pdf-parse · validation   │              │ / analyses …    │
+│  localhost:5173          │ ◀──────────────── │  localhost:5000           │              │ + GridFS files  │
+│  (live: Vercel)          │                   │  (live: Render)           │              └─────────────────┘
 └──────────────────────────┘                   │                           │   @google/genai
                                                │                           │ ───────────▶ ┌─────────────────┐
-                                               │  uploads/ (PDF + PNG)     │  JSON mode   │  Google Gemini  │
+                                               │                           │  JSON mode   │  Google Gemini  │
                                                └───────────────────────────┘ ◀─────────── └─────────────────┘
 ```
 
@@ -117,6 +118,7 @@ AI-Resume-Analyzer/
 │   ├── types/index.d.ts        # User, Resume, Analysis, Feedback, EuropassCv, ImprovedResume, CoverLetter types
 │   ├── .env.example
 │   ├── Dockerfile
+│   ├── vercel.json             # Vercel: static SPA build of the frontend
 │   └── package.json
 ├── backend/                    # Express REST API  →  see backend/README.md for full API docs
 │   ├── server.js
@@ -129,7 +131,7 @@ AI-Resume-Analyzer/
 │   │   ├── services/           # pdfService (pdf-parse), geminiService (AI + retries), europassService,
 │   │   │                       # coverLetterService
 │   │   └── utils/              # ApiError, token, files
-│   ├── uploads/                # Uploaded files (git-ignored)
+│   ├── scripts/                # migrate-uploads-to-gridfs.js (one-time move from the old uploads/ folder)
 │   ├── .env.example
 │   └── package.json
 ├── database/
@@ -140,6 +142,7 @@ AI-Resume-Analyzer/
 ├── documentation/              # Submitted academic reports (proposal, SRS, design, progress)
 ├── screenshots/                # UI screenshots
 ├── docker-compose.yml          # Frontend + backend containers (docker compose up --build)
+├── render.yaml                 # Render Blueprint for the backend API
 ├── .gitignore
 └── README.md
 ```
@@ -290,16 +293,15 @@ cd backend  && npm start
 docker compose up --build     # frontend → http://localhost:3000, backend → http://localhost:5000
 # With "Sign in with Google": pass backend/.env so the frontend image gets GOOGLE_CLIENT_ID too
 docker compose --env-file backend/.env up --build
-docker compose down           # stop (uploaded files stay in the "uploads" volume)
+docker compose down           # stop
 ```
 
 The backend container reads its secrets from `backend/.env` at run time (they are never copied into the image)
 and uses your Atlas database. For a deployed API, change `VITE_API_URL` and `CLIENT_URL` in `docker-compose.yml`.
 
 - Stop `npm run dev` first: the containers need ports **5000** and **3000**.
-- Uploaded files live in the Docker volume `uploads`, not in `backend/uploads`. Both setups share the same Atlas
-  database, so resumes uploaded with `npm run dev` appear in the Docker app too, but their PDF and preview show
-  "File not found". Upload them again inside the Docker app (or the other way round).
+- Uploaded PDFs and previews are stored in MongoDB Atlas (GridFS), so `npm run dev`, Docker and the live site
+  all see the same resumes when they use the same `MONGO_URI`.
 - Docker Desktop on Windows needs WSL 2, which needs CPU virtualization: after installing, **restart Windows**,
   and if it still does not start, enable *Intel Virtualization Technology* in the BIOS.
 
@@ -309,7 +311,35 @@ and uses your Atlas database. For a deployed API, change `VITE_API_URL` and `CLI
 cd backend && npm test        # API tests with an in-memory MongoDB and a mocked Gemini (no .env or quota needed)
 ```
 
-### 5) Troubleshooting
+### 5) Deploy live (frontend on Vercel, backend on Render)
+
+Both are free and redeploy automatically on every push to `main`. Files and data stay in MongoDB Atlas.
+
+**First, one time:** if you used the app before uploads moved to GridFS, run `cd backend && npm run migrate:uploads`
+(dry run), then `npm run migrate:uploads -- --apply` to copy the old `backend/uploads/` files into Atlas.
+
+1. **Backend → Render** ([render.com](https://render.com), sign up with GitHub)
+   - **New → Blueprint** → choose this repository. Render reads [`render.yaml`](render.yaml) and creates the
+     `resumind-api` web service (root `backend`, `npm ci --omit=dev`, `npm start`, health check `/api/health`).
+   - Fill in the values it asks for: `MONGO_URI` (tip: another database name than local, e.g. `/resumind-live`),
+     `GEMINI_API_KEY`, `GOOGLE_CLIENT_ID`, and for now `CLIENT_URL=https://example.com` (fixed in step 3).
+     `JWT_SECRET` is generated by Render.
+   - Copy the API URL, e.g. `https://resumind-api.onrender.com`, and check `…/api/health` shows `"status":"ok"`.
+2. **Frontend → Vercel** ([vercel.com](https://vercel.com), sign up with GitHub)
+   - **Add New → Project** → import this repository → **Root Directory: `frontend`**. The rest comes from
+     [`frontend/vercel.json`](frontend/vercel.json): on Vercel the app is built as a static SPA (`build/client`).
+   - Environment variables: `VITE_API_URL` = the Render URL (no trailing slash), `VITE_GOOGLE_CLIENT_ID`.
+   - Deploy and copy the site URL, e.g. `https://resumind.vercel.app`.
+3. **Connect them**
+   - Render → `resumind-api` → Environment → `CLIENT_URL` = the Vercel URL → save (it redeploys).
+   - Google Cloud Console → Credentials → your OAuth client → **Authorized JavaScript origins** → add the Vercel URL.
+   - MongoDB Atlas → Network Access must allow `0.0.0.0/0` (Render has no fixed IP).
+
+Free-plan limits: the Render API sleeps after 15 minutes without visitors, so the first request afterwards takes
+about 50 seconds. Vercel preview URLs (other branches) are blocked by CORS; use the main production URL.
+Changing a `VITE_…` variable on Vercel needs a **Redeploy**, because it is built into the JavaScript.
+
+### 6) Troubleshooting
 
 | Problem                                                             | Cause → Fix                                                                                                                                                                                                                                             |
 | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -342,6 +372,7 @@ cd backend && npm test        # API tests with an in-memory MongoDB and a mocked
 | `GEMINI_MODEL`     |          | Default `gemini-flash-latest`                                            |
 | `GOOGLE_CLIENT_ID` |          | OAuth Client ID for "Sign in with Google" (empty = turned off, 503)      |
 | `MAX_FILE_SIZE_MB` |          | Upload limit, default `10`                                               |
+| `TRUST_PROXY`      |          | Proxies in front of the API: `1` on Render, `0` (default) locally/Docker |
 
 **frontend/.env**
 
@@ -389,7 +420,8 @@ Database design: **[database/mongodb-schema.md](database/mongodb-schema.md)**.
 
 - **users** — username, email (unique), passwordHash (empty for Google-only accounts), hasPassword, googleId (unique),
   passwordChangedAt, createdAt
-- **resumes** — userId → users, filePath, imagePath, originalName, fileSize, uploadDate
+- **resumes** — userId → users, fileId, imageId (→ GridFS `uploads.files`), originalName, fileSize, uploadDate
+- **uploads.files / uploads.chunks** — GridFS: the uploaded PDFs and preview images themselves (255 KB chunks)
 - **analyses** — resumeId → resumes, userId → users, companyName, jobTitle, jobDescription, feedback (embedded), createdAt
 - **improvedresumes** — analysisId → analyses (unique), resumeId → resumes, userId → users, europassCv (embedded),
   changes (embedded array), createdAt
@@ -416,7 +448,7 @@ Earlier versions (Week 07) ran fully "serverless" through the Puter.js SDK (`put
 | Before (Puter.js)          | Now                                                       |
 | -------------------------- | --------------------------------------------------------- |
 | `puter.auth.signIn()`      | `POST /api/auth/login` / `register` (bcrypt + JWT)        |
-| `puter.fs.upload()`        | `POST /api/resume/upload` (Multer → `uploads/`)           |
+| `puter.fs.upload()`        | `POST /api/resume/upload` (Multer → MongoDB GridFS)       |
 | `puter.kv.set/list()`      | MongoDB Atlas collections via Mongoose                    |
 | `puter.ai.chat()` (GPT-4o) | `POST /api/resume/analyze` (pdf-parse + Gemini JSON mode) |
 
