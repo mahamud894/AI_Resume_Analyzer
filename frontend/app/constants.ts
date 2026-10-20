@@ -1,7 +1,7 @@
 // app/constants.ts
 // App-wide constants shared by the frontend.
 
-export const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/$/, '');
+export const API_BASE_URL = "";
 // OAuth Client ID for "Sign in with Google". Empty = the Google button is hidden (email login still works).
 export const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 export const APP_NAME = 'AI Resume Analyzer';

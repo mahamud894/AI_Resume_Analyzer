@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router";
+import { useNavigate } from "react-router";
 
 // ⭐ ১. টাইপিং অ্যানিমেশন কম্পোনেন্ট ⭐
 function TypewriterText({ text, delay = 50, startDelay = 0, className = "" }: { text: string, delay?: number, startDelay?: number, className?: string }) {
@@ -34,8 +34,18 @@ function TypewriterText({ text, delay = 50, startDelay = 0, className = "" }: { 
 
 // ⭐ ২. মূল ল্যান্ডিং পেজ ⭐
 export default function Landing() {
+  const navigate = useNavigate();
+  
+  // মডাল স্টেট
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
+  
+  // ফর্ম স্টেট
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const teamMembers = [
     { name: "Mahammad Hasan", role: "Team Leader / Frontend", id: "11220320828", img: "/images/team/mahamud.jpg" },
@@ -77,12 +87,59 @@ export default function Landing() {
     }
   ];
 
+  // ⭐ ফর্ম সাবমিট করার লজিক (Safe JSON parsing) ⭐
+  const handleAuthSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg("");
+    setIsLoading(true);
+
+    const endpoint = isLogin ? "login" : "register";
+    // Vite Proxy ব্যবহার করায় সরাসরি /api/auth দিলেই কাজ করবে
+    const API_URL = "/api/auth"; 
+
+    try {
+      const response = await fetch(`${API_URL}/${endpoint}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, email, password }),
+      });
+
+      // সার্ভার থেকে আসা রেসপন্স সেফলি পড়া
+      const text = await response.text();
+      let data = {};
+      
+      if (text) {
+        try {
+          data = JSON.parse(text);
+        } catch (parseErr) {
+          console.warn("Response is not valid JSON:", text);
+        }
+      }
+
+      // যদি সার্ভার এরর কোড দেয়
+      if (!response.ok) {
+        throw new Error(data.message || data.error || `Server Error: ${response.status}`);
+      }
+
+      // সফল হলে টোকেন সেভ করুন
+      if (data.token) {
+        localStorage.setItem("token", data.token);
+      }
+
+      // সফলভাবে লগইন/সাইনআপ হলে Upload পেজে চলে যাবে
+      navigate("/upload");
+
+    } catch (err: any) {
+      setErrorMsg(err.message || "Something went wrong. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    /* ⭐ এখানে animate-gradient-bg ক্লাসটি যোগ করা হয়েছে ⭐ */
     <div className="min-h-screen animate-gradient-bg relative overflow-hidden font-sans text-slate-800 selection:bg-purple-200">
       
       <style>{`
-        /* ব্যাকগ্রাউন্ড গ্রেডিয়েন্ট মুভমেন্ট */
         @keyframes gradientBG {
           0% { background-position: 0% 50%; }
           50% { background-position: 100% 50%; }
@@ -93,25 +150,18 @@ export default function Landing() {
           background-size: 400% 400%;
           animation: gradientBG 15s ease infinite;
         }
-
-        /* আলোর বলয়গুলোর মুভমেন্ট */
         @keyframes blob {
           0% { transform: translate(0px, 0px) scale(1); }
           33% { transform: translate(30px, -50px) scale(1.1); }
           66% { transform: translate(-20px, 20px) scale(0.9); }
           100% { transform: translate(0px, 0px) scale(1); }
         }
-        .animate-blob {
-          animation: blob 10s infinite alternate;
-        }
+        .animate-blob { animation: blob 10s infinite alternate; }
         .animation-delay-2000 { animation-delay: 2s; }
         .animation-delay-4000 { animation-delay: 4s; }
       `}</style>
 
-      {/* Background Grid Pattern */}
       <div className="absolute inset-0 z-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_80%_80%_at_50%_0%,#000_60%,transparent_100%)] opacity-50"></div>
-      
-      {/* Moving Background Blobs */}
       <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-blue-300/30 rounded-full mix-blend-multiply filter blur-[120px] pointer-events-none z-0 animate-blob"></div>
       <div className="absolute top-[20%] right-[-10%] w-[50%] h-[50%] bg-purple-300/30 rounded-full mix-blend-multiply filter blur-[120px] pointer-events-none z-0 animate-blob animation-delay-2000"></div>
       <div className="absolute bottom-[-10%] left-[20%] w-[60%] h-[50%] bg-pink-300/30 rounded-full mix-blend-multiply filter blur-[120px] pointer-events-none z-0 animate-blob animation-delay-4000"></div>
@@ -131,8 +181,8 @@ export default function Landing() {
           <div className="hidden md:flex gap-6 items-center text-sm font-bold text-slate-500">
             <a href="#features" className="hover:text-purple-600 transition">Features</a>
             <a href="#team" className="hover:text-purple-600 transition">Team</a>
-            <button onClick={() => { setIsAuthModalOpen(true); setIsLogin(true); }} className="hover:text-purple-600 transition">Log In</button>
-            <button onClick={() => { setIsAuthModalOpen(true); setIsLogin(false); }} className="bg-slate-900 text-white px-5 py-2 rounded-full font-semibold hover:bg-slate-800 transition shadow-md hover:shadow-lg hover:-translate-y-0.5 transform">Sign Up</button>
+            <button onClick={() => { setIsAuthModalOpen(true); setIsLogin(true); setErrorMsg(""); }} className="hover:text-purple-600 transition">Log In</button>
+            <button onClick={() => { setIsAuthModalOpen(true); setIsLogin(false); setErrorMsg(""); }} className="bg-slate-900 text-white px-5 py-2 rounded-full font-semibold hover:bg-slate-800 transition shadow-md hover:shadow-lg hover:-translate-y-0.5 transform">Sign Up</button>
           </div>
         </div>
       </nav>
@@ -164,10 +214,10 @@ export default function Landing() {
         </p>
         
         <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
-          <button onClick={() => { setIsAuthModalOpen(true); setIsLogin(false); }} className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3.5 rounded-full font-bold hover:from-blue-500 hover:to-purple-500 transition shadow-[0_8px_30px_rgb(124,58,237,0.3)] hover:shadow-[0_8px_30px_rgb(124,58,237,0.5)] transform hover:-translate-y-1">
+          <button onClick={() => { setIsAuthModalOpen(true); setIsLogin(false); setErrorMsg(""); }} className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3.5 rounded-full font-bold hover:from-blue-500 hover:to-purple-500 transition shadow-[0_8px_30px_rgb(124,58,237,0.3)] hover:shadow-[0_8px_30px_rgb(124,58,237,0.5)] transform hover:-translate-y-1">
             Analyze Your Resume
           </button>
-          <button onClick={() => { setIsAuthModalOpen(true); setIsLogin(true); }} className="w-full sm:w-auto bg-white/80 backdrop-blur-md border border-slate-200 text-slate-700 px-8 py-3.5 rounded-full font-bold hover:bg-white transition shadow-sm hover:shadow-md transform hover:-translate-y-1">
+          <button onClick={() => { setIsAuthModalOpen(true); setIsLogin(true); setErrorMsg(""); }} className="w-full sm:w-auto bg-white/80 backdrop-blur-md border border-slate-200 text-slate-700 px-8 py-3.5 rounded-full font-bold hover:bg-white transition shadow-sm hover:shadow-md transform hover:-translate-y-1">
             Sign In
           </button>
         </div>
@@ -221,23 +271,13 @@ export default function Landing() {
       {/* Features Section */}
       <section id="features" className="relative z-10 max-w-6xl mx-auto mt-20 px-6 scroll-mt-24">
         <div className="relative w-full h-64 md:h-80 rounded-3xl overflow-hidden mb-12 border border-white/50 shadow-xl group">
-          <img 
-            src="https://images.unsplash.com/photo-1677442136019-21780ecad995?q=80&w=2000&auto=format&fit=crop" 
-            alt="AI Technology" 
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
-          />
+          <img src="https://images.unsplash.com/photo-1677442136019-21780ecad995?q=80&w=2000&auto=format&fit=crop" alt="AI Technology" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
           <div className="absolute inset-0 bg-gradient-to-r from-[#f8fafc] via-[#f8fafc]/90 to-transparent"></div>
           
           <div className="absolute inset-0 flex flex-col justify-center items-start text-left px-8 md:px-16">
-            <span className="text-xs font-bold text-purple-600 uppercase tracking-widest mb-2 bg-purple-100 px-3 py-1 rounded-full">
-              Core Engine
-            </span>
-            <h2 className="text-3xl md:text-5xl font-extrabold text-slate-900 mb-3">
-              Intelligent Features
-            </h2>
-            <p className="text-slate-600 text-base md:text-lg font-medium max-w-lg">
-              Our Gemini AI engine analyzes your resume against real job descriptions to give you the ultimate edge.
-            </p>
+            <span className="text-xs font-bold text-purple-600 uppercase tracking-widest mb-2 bg-purple-100 px-3 py-1 rounded-full">Core Engine</span>
+            <h2 className="text-3xl md:text-5xl font-extrabold text-slate-900 mb-3">Intelligent Features</h2>
+            <p className="text-slate-600 text-base md:text-lg font-medium max-w-lg">Our Gemini AI engine analyzes your resume against real job descriptions to give you the ultimate edge.</p>
           </div>
         </div>
 
@@ -273,33 +313,25 @@ export default function Landing() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {teamMembers.map((member, i) => (
             <div key={i} className="group relative bg-white/40 backdrop-blur-xl border border-white/60 p-6 rounded-3xl flex flex-col items-center text-center transition-all duration-500 hover:-translate-y-3 hover:shadow-[0_20px_40px_rgba(168,85,247,0.15)] overflow-hidden shadow-sm">
-              
               <div className="absolute inset-0 bg-gradient-to-br from-purple-100/0 via-transparent to-blue-100/0 group-hover:from-purple-100/60 group-hover:to-blue-100/60 transition-all duration-500 pointer-events-none"></div>
-              
               <div className="relative z-10 transition-transform duration-500 group-hover:scale-105">
                 <div className="w-20 h-20 rounded-full overflow-hidden bg-slate-100 border-4 border-white shadow-md relative">
                   <img src={member.img} alt={member.name} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement!.innerText = member.name.split(' ').map(n => n[0]).join(''); e.currentTarget.parentElement!.className += ' flex items-center justify-center text-xl font-bold text-slate-400'; }} />
                 </div>
               </div>
-
               <div className="relative z-10 mt-5 flex flex-col items-center">
                 <h4 className="font-extrabold text-slate-900 text-base tracking-tight group-hover:text-purple-700 transition-colors">{member.name}</h4>
-                
                 <div className="mt-2">
-                  <span className="inline-block px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full border bg-slate-100 text-slate-600 border-slate-200">
-                    {member.role}
-                  </span>
+                  <span className="inline-block px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full border bg-slate-100 text-slate-600 border-slate-200">{member.role}</span>
                 </div>
-
                 <p className="text-xs text-slate-400 font-semibold mt-2">ID: {member.id}</p>
               </div>
-
             </div>
           ))}
         </div>
       </section>
 
-      {/* Auth Modal */}
+      {/* Auth Modal with API Logic */}
       {isAuthModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
           <div className="bg-white/90 backdrop-blur-xl border border-white w-full max-w-md rounded-2xl shadow-2xl p-8 relative animate-in fade-in zoom-in duration-200">
@@ -310,30 +342,61 @@ export default function Landing() {
               <p className="text-slate-500 text-sm mt-2">{isLogin ? 'Log in to continue your job journey' : 'Start your AI-powered job search today'}</p>
             </div>
 
-            <form className="space-y-4">
+            {errorMsg && (
+              <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm font-semibold rounded-lg border border-red-100 text-center">
+                {errorMsg}
+              </div>
+            )}
+
+            <form className="space-y-4" onSubmit={handleAuthSubmit}>
               {!isLogin && (
                 <div>
                   <label className="text-sm font-semibold text-slate-700">Username</label>
-                  <input type="text" placeholder="johndoe123" className="w-full mt-1 p-3 bg-white/50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition font-medium" />
+                  <input 
+                    type="text" 
+                    placeholder="johndoe123" 
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    required
+                    className="w-full mt-1 p-3 bg-white/50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition font-medium" 
+                  />
                 </div>
               )}
               <div>
                 <label className="text-sm font-semibold text-slate-700">Email</label>
-                <input type="email" placeholder="you@example.com" className="w-full mt-1 p-3 bg-white/50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition font-medium" />
+                <input 
+                  type="email" 
+                  placeholder="you@example.com" 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="w-full mt-1 p-3 bg-white/50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition font-medium" 
+                />
               </div>
               <div>
                 <label className="text-sm font-semibold text-slate-700">Password</label>
-                <input type="password" placeholder="••••••••" className="w-full mt-1 p-3 bg-white/50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition font-medium" />
+                <input 
+                  type="password" 
+                  placeholder="••••••••" 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="w-full mt-1 p-3 bg-white/50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition font-medium" 
+                />
               </div>
               
-              <button type="button" className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold py-3.5 rounded-lg hover:from-blue-500 hover:to-purple-500 transition mt-4 shadow-lg shadow-purple-500/30 transform hover:-translate-y-0.5">
-                {isLogin ? 'Log In' : 'Sign Up'}
+              <button 
+                type="submit" 
+                disabled={isLoading}
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold py-3.5 rounded-lg hover:from-blue-500 hover:to-purple-500 transition mt-4 shadow-lg shadow-purple-500/30 transform hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                {isLoading ? "Processing..." : (isLogin ? 'Log In' : 'Sign Up')}
               </button>
             </form>
 
             <div className="mt-6 text-center text-sm text-slate-500">
               {isLogin ? "Don't have an account? " : "Already have an account? "}
-              <button onClick={() => setIsLogin(!isLogin)} className="font-bold text-purple-600 hover:underline">
+              <button onClick={() => { setIsLogin(!isLogin); setErrorMsg(""); }} className="font-bold text-purple-600 hover:underline">
                 {isLogin ? 'Sign Up' : 'Log In'}
               </button>
             </div>

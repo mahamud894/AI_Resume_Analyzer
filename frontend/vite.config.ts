@@ -7,4 +7,10 @@ export default defineConfig({
   resolve: {
     tsconfigPaths: true,
   },
+  // ⭐ এই নতুন অংশটুকু যোগ করুন ⭐
+  server: {
+    proxy: {
+      '/api': 'http://localhost:5000',
+    },
+  },
 });
