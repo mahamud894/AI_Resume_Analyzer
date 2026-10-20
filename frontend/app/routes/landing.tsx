@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
+import { useAuthStore } from "~/lib/auth"; // ⭐ মেইন প্রজেক্টের অথ স্টোর ইম্পোর্ট করা হলো
 
 // ⭐ ১. টাইপিং অ্যানিমেশন কম্পোনেন্ট ⭐
 function TypewriterText({ text, delay = 50, startDelay = 0, className = "" }: { text: string, delay?: number, startDelay?: number, className?: string }) {
@@ -36,6 +37,9 @@ function TypewriterText({ text, delay = 50, startDelay = 0, className = "" }: { 
 export default function Landing() {
   const navigate = useNavigate();
   
+  // ⭐ Zustand Auth Store থেকে ফাংশন ও স্টেট নেওয়া হলো ⭐
+  const { login, register, isLoading, error, clearError } = useAuthStore();
+
   // মডাল স্টেট
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
@@ -44,8 +48,7 @@ export default function Landing() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [errorMsg, setErrorMsg] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [formError, setFormError] = useState("");
 
   const teamMembers = [
     { name: "Mahammad Hasan", role: "Team Leader / Frontend", id: "11220320828", img: "/images/team/mahamud.jpg" },
@@ -87,54 +90,29 @@ export default function Landing() {
     }
   ];
 
-  // ⭐ ফর্ম সাবমিট করার লজিক (Safe JSON parsing) ⭐
+  // ⭐ নতুন handleAuthSubmit (Zustand ব্যবহার করে) ⭐
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMsg("");
-    setIsLoading(true);
+    setFormError("");
+    clearError(); // আগের কোনো এরর থাকলে মুছে ফেলবে
 
-    const endpoint = isLogin ? "login" : "register";
-    // Vite Proxy ব্যবহার করায় সরাসরি /api/auth দিলেই কাজ করবে
-    const API_URL = "/api/auth"; 
+    let success = false;
+    
+    // Zustand স্টোরের ফাংশন কল করা হচ্ছে
+    if (isLogin) {
+      success = await login(email, password);
+    } else {
+      success = await register(username, email, password);
+    }
 
-    try {
-      const response = await fetch(`${API_URL}/${endpoint}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, email, password }),
-      });
-
-      // সার্ভার থেকে আসা রেসপন্স সেফলি পড়া
-      const text = await response.text();
-      let data = {};
-      
-      if (text) {
-        try {
-          data = JSON.parse(text);
-        } catch (parseErr) {
-          console.warn("Response is not valid JSON:", text);
-        }
-      }
-
-      // যদি সার্ভার এরর কোড দেয়
-      if (!response.ok) {
-        throw new Error(data.message || data.error || `Server Error: ${response.status}`);
-      }
-
-      // সফল হলে টোকেন সেভ করুন
-      if (data.token) {
-        localStorage.setItem("token", data.token);
-      }
-
-      // সফলভাবে লগইন/সাইনআপ হলে Upload পেজে চলে যাবে
+    // লগইন সফল হলে সরাসরি Upload পেজে চলে যাবে
+    if (success) {
       navigate("/upload");
-
-    } catch (err: any) {
-      setErrorMsg(err.message || "Something went wrong. Please try again.");
-    } finally {
-      setIsLoading(false);
     }
   };
+
+  // এরর মেসেজ (লোকাল ফর্ম এরর অথবা Zustand থেকে আসা এরর)
+  const displayError = formError || error;
 
   return (
     <div className="min-h-screen animate-gradient-bg relative overflow-hidden font-sans text-slate-800 selection:bg-purple-200">
@@ -181,8 +159,8 @@ export default function Landing() {
           <div className="hidden md:flex gap-6 items-center text-sm font-bold text-slate-500">
             <a href="#features" className="hover:text-purple-600 transition">Features</a>
             <a href="#team" className="hover:text-purple-600 transition">Team</a>
-            <button onClick={() => { setIsAuthModalOpen(true); setIsLogin(true); setErrorMsg(""); }} className="hover:text-purple-600 transition">Log In</button>
-            <button onClick={() => { setIsAuthModalOpen(true); setIsLogin(false); setErrorMsg(""); }} className="bg-slate-900 text-white px-5 py-2 rounded-full font-semibold hover:bg-slate-800 transition shadow-md hover:shadow-lg hover:-translate-y-0.5 transform">Sign Up</button>
+            <button onClick={() => { setIsAuthModalOpen(true); setIsLogin(true); setFormError(""); clearError(); }} className="hover:text-purple-600 transition">Log In</button>
+            <button onClick={() => { setIsAuthModalOpen(true); setIsLogin(false); setFormError(""); clearError(); }} className="bg-slate-900 text-white px-5 py-2 rounded-full font-semibold hover:bg-slate-800 transition shadow-md hover:shadow-lg hover:-translate-y-0.5 transform">Sign Up</button>
           </div>
         </div>
       </nav>
@@ -214,10 +192,10 @@ export default function Landing() {
         </p>
         
         <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
-          <button onClick={() => { setIsAuthModalOpen(true); setIsLogin(false); setErrorMsg(""); }} className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3.5 rounded-full font-bold hover:from-blue-500 hover:to-purple-500 transition shadow-[0_8px_30px_rgb(124,58,237,0.3)] hover:shadow-[0_8px_30px_rgb(124,58,237,0.5)] transform hover:-translate-y-1">
+          <button onClick={() => { setIsAuthModalOpen(true); setIsLogin(false); setFormError(""); clearError(); }} className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3.5 rounded-full font-bold hover:from-blue-500 hover:to-purple-500 transition shadow-[0_8px_30px_rgb(124,58,237,0.3)] hover:shadow-[0_8px_30px_rgb(124,58,237,0.5)] transform hover:-translate-y-1">
             Analyze Your Resume
           </button>
-          <button onClick={() => { setIsAuthModalOpen(true); setIsLogin(true); setErrorMsg(""); }} className="w-full sm:w-auto bg-white/80 backdrop-blur-md border border-slate-200 text-slate-700 px-8 py-3.5 rounded-full font-bold hover:bg-white transition shadow-sm hover:shadow-md transform hover:-translate-y-1">
+          <button onClick={() => { setIsAuthModalOpen(true); setIsLogin(true); setFormError(""); clearError(); }} className="w-full sm:w-auto bg-white/80 backdrop-blur-md border border-slate-200 text-slate-700 px-8 py-3.5 rounded-full font-bold hover:bg-white transition shadow-sm hover:shadow-md transform hover:-translate-y-1">
             Sign In
           </button>
         </div>
@@ -331,7 +309,7 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Auth Modal with API Logic */}
+      {/* Auth Modal with Zustand Logic */}
       {isAuthModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
           <div className="bg-white/90 backdrop-blur-xl border border-white w-full max-w-md rounded-2xl shadow-2xl p-8 relative animate-in fade-in zoom-in duration-200">
@@ -342,9 +320,9 @@ export default function Landing() {
               <p className="text-slate-500 text-sm mt-2">{isLogin ? 'Log in to continue your job journey' : 'Start your AI-powered job search today'}</p>
             </div>
 
-            {errorMsg && (
+            {displayError && (
               <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm font-semibold rounded-lg border border-red-100 text-center">
-                {errorMsg}
+                {displayError}
               </div>
             )}
 
@@ -396,7 +374,7 @@ export default function Landing() {
 
             <div className="mt-6 text-center text-sm text-slate-500">
               {isLogin ? "Don't have an account? " : "Already have an account? "}
-              <button onClick={() => { setIsLogin(!isLogin); setErrorMsg(""); }} className="font-bold text-purple-600 hover:underline">
+              <button onClick={() => { setIsLogin(!isLogin); setFormError(""); clearError(); }} className="font-bold text-purple-600 hover:underline">
                 {isLogin ? 'Sign Up' : 'Log In'}
               </button>
             </div>
