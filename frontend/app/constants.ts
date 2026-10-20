@@ -1,7 +1,9 @@
 // app/constants.ts
 // App-wide constants shared by the frontend.
 
-export const API_BASE_URL = "";
+// ⭐ এখানে আপনার Render থেকে পাওয়া আসল লিংকটি বসান ⭐
+export const API_BASE_URL = "https://ai-resume-analyzer-backend-xyz.onrender.com"; 
+
 // OAuth Client ID for "Sign in with Google". Empty = the Google button is hidden (email login still works).
 export const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 export const APP_NAME = 'AI Resume Analyzer';
@@ -15,7 +17,3 @@ export const ROUTES = {
   RESUME: '/resume',
   WIPE: '/wipe',
 } as const;
-
-// Note: the AI prompt (previously `prepareInstructions` here) now lives in the backend,
-// in backend/src/services/geminiService.js (`buildPrompt`). It forces Gemini to return the
-// `Feedback` shape from types/index.d.ts, which the Summary/ATS/Details components display.
