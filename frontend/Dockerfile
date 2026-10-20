@@ -13,6 +13,9 @@ FROM node:24-alpine AS build-env
 #   docker build --build-arg VITE_API_URL=https://api.example.com -t resumind-frontend .
 ARG VITE_API_URL=http://localhost:5000
 ENV VITE_API_URL=$VITE_API_URL
+# Optional "Sign in with Google" Client ID (empty = button hidden). It is public, not a secret.
+ARG VITE_GOOGLE_CLIENT_ID=
+ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
 COPY . /app/
 COPY --from=development-dependencies-env /app/node_modules /app/node_modules
 WORKDIR /app

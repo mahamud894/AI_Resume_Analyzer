@@ -6,15 +6,15 @@ import { useAuthStore } from "~/lib/auth";
 // Route guard: sends logged-out visitors to /auth and brings them back afterwards.
 // Returns true once the user is known to be logged in.
 export function useRequireAuth() {
-    const { isLoading, isAuthenticated } = useAuthStore();
+    const { isLoading, isAuthenticated, signedOut } = useAuthStore();
     const navigate = useNavigate();
     const location = useLocation();
 
     useEffect(() => {
         if (!isLoading && !isAuthenticated) {
-            navigate(`/auth?next=${encodeURIComponent(location.pathname)}`, { replace: true });
+            navigate(signedOut ? "/auth" : `/auth?next=${encodeURIComponent(location.pathname)}`, { replace: true });
         }
-    }, [isLoading, isAuthenticated, location.pathname]);
+    }, [isLoading, isAuthenticated, signedOut, location.pathname]);
 
     return !isLoading && isAuthenticated;
 }

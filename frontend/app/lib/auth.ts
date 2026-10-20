@@ -8,11 +8,18 @@ interface AuthStore {
     // true until we know whether the saved token is still valid
     isLoading: boolean;
     error: string | null;
+    // true after the user clicked Log Out / deleted the account (not when a session expired).
+    // The route guard then sends them to /auth without ?next=, so the next login starts at home.
+    signedOut: boolean;
 
     init: () => Promise<void>;
     login: (email: string, password: string) => Promise<boolean>;
     register: (username: string, email: string, password: string) => Promise<boolean>;
-    logout: () => void;
+    loginWithGoogle: (credential: string) => Promise<boolean>;
+    logout: (byUser?: boolean) => void;
+    // Both throw on failure, so the account page can show the error next to its own form
+    changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
+    deleteAccount: (confirmation: { password: string } | { confirmEmail: string }) => Promise<void>;
     clearError: () => void;
 }
 
@@ -22,7 +29,7 @@ const errorMessage = (err: unknown) =>
 export const useAuthStore = create<AuthStore>((set, get) => {
     const startSession = (token: string, user: User) => {
         tokenStorage.set(token);
-        set({ user, isAuthenticated: true, isLoading: false, error: null });
+        set({ user, isAuthenticated: true, isLoading: false, error: null, signedOut: false });
     };
 
     const authenticate = async (call: () => ReturnType<typeof authApi.login>) => {
@@ -37,19 +44,21 @@ export const useAuthStore = create<AuthStore>((set, get) => {
         }
     };
 
-    const logout = () => {
+    const logout = (byUser = true) => {
         tokenStorage.clear();
-        set({ user: null, isAuthenticated: false, isLoading: false });
+        set({ user: null, isAuthenticated: false, isLoading: false, signedOut: byUser });
     };
 
-    // Any 401 from the API (expired token, deleted user) logs us out automatically
-    setUnauthorizedHandler(logout);
+    // Any 401 from the API (expired token, deleted user) logs us out automatically.
+    // signedOut stays false, so after logging in again the user returns to the page they were on.
+    setUnauthorizedHandler(() => logout(false));
 
     return {
         user: null,
         isAuthenticated: false,
         isLoading: true,
         error: null,
+        signedOut: false,
 
         // Runs once in the browser: restores the session from the saved token
         init: async () => {
@@ -69,7 +78,17 @@ export const useAuthStore = create<AuthStore>((set, get) => {
         },
         login: (email, password) => authenticate(() => authApi.login(email, password)),
         register: (username, email, password) => authenticate(() => authApi.register(username, email, password)),
+        loginWithGoogle: (credential) => authenticate(() => authApi.google(credential)),
         logout,
+        changePassword: async (currentPassword, newPassword) => {
+            const { token, user } = await authApi.changePassword(currentPassword, newPassword);
+            startSession(token, user); // keep this device logged in with the new token
+        },
+        // The caller logs out afterwards (after leaving the protected page, so the route guard
+        // does not add ?next=/account to the login URL)
+        deleteAccount: async (confirmation) => {
+            await authApi.deleteAccount(confirmation);
+        },
         clearError: () => get().error && set({ error: null }),
     };
 });

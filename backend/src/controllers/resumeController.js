@@ -93,9 +93,14 @@ export async function getResume(req, res) {
 // GET /api/resume/:id/file   → the original PDF
 export async function getResumeFile(req, res) {
     const resume = await findOwnResume(req.params.id, req.user._id);
-    res.type("application/pdf");
-    res.setHeader("Content-Disposition", `inline; filename="${encodeURIComponent(resume.originalName)}"`);
-    res.sendFile(toAbsolutePath(resume.filePath));
+    // Headers go through sendFile so they are only set when the file exists;
+    // otherwise the JSON error would be sent labelled as a PDF.
+    res.sendFile(toAbsolutePath(resume.filePath), {
+        headers: {
+            "Content-Type": "application/pdf",
+            "Content-Disposition": `inline; filename="${encodeURIComponent(resume.originalName)}"`,
+        },
+    });
 }
 
 // GET /api/resume/:id/image   → the page-1 preview image

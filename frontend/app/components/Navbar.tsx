@@ -10,8 +10,10 @@ const Navbar = () => {
 
     const handleLogout = () => {
         setMenuOpen(false);
+        // Leave the protected page first: logging out while still on it makes the route guard
+        // send us to /auth?next=<this page>, and the next person to log in would land there
+        navigate('/auth', { replace: true });
         logout();
-        navigate('/auth');
     }
 
     // Mobile menu: close on outside click/tap and on Escape
@@ -40,7 +42,11 @@ const Navbar = () => {
             {/* Tablet and desktop: inline */}
             <div className="hidden md:flex flex-row items-center gap-4">
                 {user && (
-                    <span className="text-dark-200 max-w-50 truncate">Hi, {user.username}</span>
+                    <Link to="/account" title="Your account"
+                          className="text-dark-200 max-w-50 min-h-11 inline-flex items-center hover:underline">
+                        {/* truncate on an inner span: a flex container clips its text without the "..." */}
+                        <span className="truncate">Hi, {user.username}</span>
+                    </Link>
                 )}
                 <Link to="/upload" className="primary-button w-fit">
                     Upload Resume
@@ -73,6 +79,11 @@ const Navbar = () => {
                     <Link to="/upload" className="primary-button" onClick={() => setMenuOpen(false)}>
                         Upload Resume
                     </Link>
+                    {user && (
+                        <Link to="/account" className="secondary-button w-full" onClick={() => setMenuOpen(false)}>
+                            Account
+                        </Link>
+                    )}
                     {user && (
                         <button onClick={handleLogout} className="secondary-button w-full">
                             Log Out

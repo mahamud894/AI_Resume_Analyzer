@@ -29,6 +29,7 @@ CREATE TABLE users (
     username       VARCHAR(30)   NOT NULL,
     email          VARCHAR(255)  NOT NULL,
     password_hash  VARCHAR(100)  NOT NULL,            -- bcrypt hash, never plain text
+    password_changed_at TIMESTAMP NULL,               -- tokens issued before this are rejected
     created_at     TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT pk_users          PRIMARY KEY (id),

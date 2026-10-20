@@ -1,8 +1,9 @@
-import {Link, useParams} from "react-router";
-import {useEffect, useState} from "react";
+import {Link, useParams, useSearchParams} from "react-router";
+import {type FormEvent, useEffect, useState} from "react";
 import Summary from "~/components/Summary";
 import ATS from "~/components/ATS";
 import Details from "~/components/Details";
+import JobFields, {readJobDetails} from "~/components/JobFields";
 import {resumeApi} from "~/lib/api";
 import {useProtectedFile, useRequireAuth} from "~/lib/hooks";
 
@@ -14,8 +15,12 @@ export const meta = () => ([
 const Resume = () => {
     const isAuthenticated = useRequireAuth();
     const { id } = useParams();
+    const [searchParams, setSearchParams] = useSearchParams();
     const [resume, setResume] = useState<Resume | null>(null);
     const [error, setError] = useState('');
+    const [showJobForm, setShowJobForm] = useState(false);
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [jobFormError, setJobFormError] = useState('');
 
     useEffect(() => {
         if (!isAuthenticated || !id) return;
@@ -28,8 +33,35 @@ const Resume = () => {
     // PDF and preview image are protected by the JWT, so we download them as blobs
     const resumeUrl = useProtectedFile(resume?.fileUrl);
     const imageUrl = useProtectedFile(resume?.imageUrl);
-    const analysis = resume?.analyses[0];
+    // ?analysis=<id> picks one of the jobs this resume was analyzed for; default is the newest
+    const analyses = resume?.analyses ?? [];
+    const analysis = analyses.find((a) => a.id === searchParams.get('analysis')) ?? analyses[0];
     const feedback = analysis?.feedback;
+
+    const showAnalysis = (analysisId: string) => setSearchParams({ analysis: analysisId }, { replace: true });
+
+    // Same resume, new job: runs a new analysis and switches to it
+    const handleAnalyzeAgain = async (e: FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setJobFormError('');
+        const { job, error } = readJobDetails(e.currentTarget);
+        if (error) return setJobFormError(error);
+        if (!resume) return;
+
+        setIsAnalyzing(true);
+        try {
+            const { analysis: created } = await resumeApi.analyze({ resumeId: resume.id, ...job! });
+            // Add it locally (newest first) instead of re-fetching: a failed re-fetch would show an
+            // error for an analysis that did succeed and invite a duplicate (quota-using) retry
+            setResume((current) => current && { ...current, analyses: [created, ...current.analyses] });
+            showAnalysis(created.id);
+            setShowJobForm(false);
+        } catch (err) {
+            setJobFormError(err instanceof Error ? err.message : 'Something went wrong');
+        } finally {
+            setIsAnalyzing(false);
+        }
+    }
 
     return (
         <main className="!pt-0">
@@ -64,12 +96,25 @@ const Resume = () => {
                 <section className="feedback-section">
                     <div className="flex flex-col gap-1">
                         <h2 className="text-3xl sm:text-4xl !text-black font-bold">Resume Review</h2>
-                        {analysis && (
+                        {analysis && analyses.length === 1 && (
                             <p className="text-gray-500 break-words">
                                 {[analysis.companyName, analysis.jobTitle].filter(Boolean).join(' — ')}
                             </p>
                         )}
                     </div>
+                    {analysis && analyses.length > 1 && (
+                        <div className="form-div">
+                            <label htmlFor="analysis-picker">Analyzed for {analyses.length} jobs — showing:</label>
+                            <select id="analysis-picker" value={analysis.id} onChange={(e) => showAnalysis(e.target.value)}
+                                    className="cursor-pointer">
+                                {analyses.map((a) => (
+                                    <option key={a.id} value={a.id}>
+                                        {[a.companyName, a.jobTitle].filter(Boolean).join(' — ')} · {a.feedback.overallScore}/100 · {new Date(a.createdAt).toLocaleDateString()}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
                     {resume && analysis && (
                         <div className="flex flex-col sm:flex-row gap-3">
                             <Link to={`/resume/${resume.id}/improved/${analysis.id}`} className="primary-button sm:w-fit text-lg px-6">
@@ -82,6 +127,35 @@ const Resume = () => {
                                 </Link>
                             )}
                         </div>
+                    )}
+                    {resume && !showJobForm && (
+                        <button type="button" onClick={() => setShowJobForm(true)}
+                                className="secondary-button sm:w-fit px-6">
+                            Analyze for another job
+                        </button>
+                    )}
+                    {resume && showJobForm && (
+                        <form onSubmit={handleAnalyzeAgain} className="!gap-4 rounded-2xl bg-gray-50 p-4 sm:p-6">
+                            <h3 className="text-xl font-bold text-black">Analyze this resume for another job</h3>
+                            <fieldset disabled={isAnalyzing} className="flex flex-col gap-4 w-full">
+                                <JobFields />
+                            </fieldset>
+                            {jobFormError && (
+                                <p className="w-full rounded-2xl bg-red-50 border border-red-200 text-red-700 px-4 py-3" role="alert">
+                                    {jobFormError}
+                                </p>
+                            )}
+                            <div className="flex flex-col sm:flex-row gap-3 w-full">
+                                <button type="submit" disabled={isAnalyzing} className="primary-button sm:w-fit px-6">
+                                    {isAnalyzing ? 'Analyzing... (up to 30 seconds)' : 'Analyze'}
+                                </button>
+                                <button type="button" disabled={isAnalyzing}
+                                        onClick={() => { setShowJobForm(false); setJobFormError(''); }}
+                                        className="secondary-button sm:w-fit px-6">
+                                    Cancel
+                                </button>
+                            </div>
+                        </form>
                     )}
                     {error ? (
                         <p className="rounded-2xl bg-red-50 border border-red-200 text-red-700 px-4 py-3">{error}</p>

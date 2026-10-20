@@ -35,6 +35,28 @@ export const loginRules = [
     validate,
 ];
 
+export const changePasswordRules = [
+    // Optional here: Google-only accounts set their first password without one (the controller checks the rest)
+    body("currentPassword").optional().isString().withMessage("Current password must be text"),
+    body("newPassword")
+        .isString()
+        .isLength({ min: 6, max: 72 })
+        .withMessage("New password must be 6-72 characters"),
+    validate,
+];
+
+// password for normal accounts, confirmEmail for Google-only ones; the controller decides which is needed
+export const deleteAccountRules = [
+    body("password").optional().isString().withMessage("Password must be text"),
+    body("confirmEmail").optional().isString().withMessage("confirmEmail must be text"),
+    validate,
+];
+
+export const googleLoginRules = [
+    body("credential").isString().isLength({ min: 20, max: 4096 }).withMessage("A Google credential is required"),
+    validate,
+];
+
 export const analyzeRules = [
     body("resumeId").isMongoId().withMessage("A valid resumeId is required"),
     body("companyName")

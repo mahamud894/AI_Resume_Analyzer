@@ -78,7 +78,16 @@ export const authApi = {
         request<AuthResponse>("/api/auth/register", { method: "POST", json: { username, email, password } }),
     login: (email: string, password: string) =>
         request<AuthResponse>("/api/auth/login", { method: "POST", json: { email, password } }),
+    // credential = the ID token from the "Sign in with Google" button
+    google: (credential: string) =>
+        request<AuthResponse>("/api/auth/google", { method: "POST", json: { credential } }),
     me: () => request<{ user: User }>("/api/auth/me"),
+    // Returns a new token: tokens issued before the change stop working
+    changePassword: (currentPassword: string, newPassword: string) =>
+        request<AuthResponse>("/api/auth/password", { method: "PUT", json: { currentPassword, newPassword } }),
+    // Password accounts confirm with { password }, Google-only accounts with { confirmEmail }
+    deleteAccount: (confirmation: { password: string } | { confirmEmail: string }) =>
+        request<{ message: string }>("/api/auth/me", { method: "DELETE", json: confirmation }),
 };
 
 export const resumeApi = {

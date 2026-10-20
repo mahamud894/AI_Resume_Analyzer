@@ -1,8 +1,8 @@
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
-import { login, me, register } from "../controllers/authController.js";
+import { changePassword, deleteAccount, googleLogin, login, me, register } from "../controllers/authController.js";
 import { requireAuth } from "../middleware/auth.js";
-import { loginRules, registerRules } from "../middleware/validate.js";
+import { changePasswordRules, deleteAccountRules, googleLoginRules, loginRules, registerRules } from "../middleware/validate.js";
 
 const router = Router();
 
@@ -17,6 +17,10 @@ const authLimiter = rateLimit({
 
 router.post("/register", authLimiter, registerRules, register);
 router.post("/login", authLimiter, loginRules, login);
+router.post("/google", authLimiter, googleLoginRules, googleLogin);
 router.get("/me", requireAuth, me);
+// Both ask for the password again, so they share the password-guessing limit
+router.put("/password", authLimiter, requireAuth, changePasswordRules, changePassword);
+router.delete("/me", authLimiter, requireAuth, deleteAccountRules, deleteAccount);
 
 export default router;

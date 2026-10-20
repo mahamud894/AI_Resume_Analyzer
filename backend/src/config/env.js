@@ -32,6 +32,8 @@ const config = {
         .split(",")
         .map((url) => url.trim())
         .filter(Boolean),
+    // Optional: "Sign in with Google" is turned off (503) until this OAuth Client ID is set
+    googleClientId: process.env.GOOGLE_CLIENT_ID || "",
     geminiApiKey: process.env.GEMINI_API_KEY || "",
     geminiModel: process.env.GEMINI_MODEL || "gemini-flash-latest",
     maxFileSizeMb: Number(process.env.MAX_FILE_SIZE_MB) || 10,

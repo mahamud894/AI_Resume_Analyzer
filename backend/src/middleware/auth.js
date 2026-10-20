@@ -24,6 +24,11 @@ export async function requireAuth(req, _res, next) {
     const user = await User.findById(payload.sub);
     if (!user) throw ApiError.unauthorized("User no longer exists");
 
+    // A password change logs out every older session (JWT iat is in seconds)
+    if (user.passwordChangedAt && payload.iat < Math.floor(user.passwordChangedAt.getTime() / 1000)) {
+        throw ApiError.unauthorized("Password was changed, please log in again");
+    }
+
     req.user = user;
     next();
 }

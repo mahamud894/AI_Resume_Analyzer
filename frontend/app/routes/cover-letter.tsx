@@ -132,7 +132,7 @@ const CoverLetterPage = () => {
     const showActions = coverLetter && !isEditing && !isGenerating;
 
     return (
-        <main className="!pt-0 bg-gray-50 min-h-screen print-area">
+        <main className="!pt-0 bg-[url('/images/bg-small.svg')] bg-cover bg-center bg-fixed min-h-screen print-area">
             <nav className="resume-nav bg-white no-print">
                 <Link to={`/resume/${id}/improved/${analysisId}`} className="back-button">
                     <img src="/icons/back.svg" alt="back" className="w-2.5 h-2.5" />
@@ -267,8 +267,10 @@ const CoverLetterPage = () => {
                                             </button>
                                         </div>
                                     </div>
-                                    <textarea className="letter-sheet letter-editor" value={draft} maxLength={MAX_EDITED_TEXT}
-                                              onChange={(e) => setDraft(e.target.value)} aria-label="Edit cover letter" />
+                                    <div className="sheet-frame">
+                                        <textarea className="letter-sheet letter-editor" value={draft} maxLength={MAX_EDITED_TEXT}
+                                                  onChange={(e) => setDraft(e.target.value)} aria-label="Edit cover letter" />
+                                    </div>
                                 </div>
                             ) : letter ? (
                                 <>
@@ -285,7 +287,9 @@ const CoverLetterPage = () => {
                                             </button>
                                         )}
                                     </div>
-                                    <CoverLetterSheet letter={letter} editedText={coverLetter?.editedText} />
+                                    <div className="sheet-frame">
+                                        <CoverLetterSheet letter={letter} editedText={coverLetter?.editedText} />
+                                    </div>
                                 </>
                             ) : (
                                 <div className="no-print flex flex-col items-center gap-3 text-center bg-white rounded-2xl p-6 sm:p-10">

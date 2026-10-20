@@ -1,0 +1,38 @@
+# Runs the whole app with one command:   docker compose up --build
+#   frontend → http://localhost:3000
+#   backend  → http://localhost:5000
+# MongoDB is your Atlas cluster from backend/.env (MONGO_URI), so create backend/.env first.
+services:
+  backend:
+    build: ./backend
+    env_file: ./backend/.env
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      # The frontend container is served on port 3000, not Vite's 5173
+      CLIENT_URL: http://localhost:3000
+    ports:
+      - "5000:5000"
+    volumes:
+      - uploads:/app/uploads
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # Baked into the JS bundle: the address the BROWSER uses to reach the API
+        VITE_API_URL: http://localhost:5000
+        # Taken from GOOGLE_CLIENT_ID when started with:  docker compose --env-file backend/.env up --build
+        # (without --env-file it is empty and the Google button is simply hidden)
+        VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+    ports:
+      - "3000:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  # Keeps uploaded resumes when containers are rebuilt
+  uploads:

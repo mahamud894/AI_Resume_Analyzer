@@ -144,9 +144,9 @@ const Improved = () => {
     };
 
     return (
-        <main className="!pt-0 bg-gray-50 min-h-screen print-area">
+        <main className="!pt-0 bg-[url('/images/bg-small.svg')] bg-cover bg-center bg-fixed min-h-screen print-area">
             <nav className="resume-nav bg-white no-print">
-                <Link to={`/resume/${id}`} className="back-button">
+                <Link to={`/resume/${id}?analysis=${analysisId}`} className="back-button">
                     <img src="/icons/back.svg" alt="back" className="w-2.5 h-2.5" />
                     <span className="text-gray-800 text-sm font-semibold">Back to Review</span>
                 </Link>
@@ -245,7 +245,7 @@ const Improved = () => {
                                     )}
                                 </div>
                             </div>
-                            <div ref={cvRef} className="print-area">
+                            <div ref={cvRef} className="print-area sheet-frame">
                                 {/* key: a regenerated / saved / reset CV is rendered fresh (drops unsaved DOM edits) */}
                                 <EuropassCv
                                     key={`${improved.id}-${improved.createdAt}-${cvVersion}`}

@@ -21,9 +21,18 @@ const userSchema = new mongoose.Schema(
         // `select: false` means it is not returned by queries unless asked for explicitly.
         passwordHash: {
             type: String,
-            required: true,
+            // Accounts created with "Sign in with Google" have no password until the user sets one
+            required() {
+                return this.hasPassword;
+            },
             select: false,
         },
+        // false for Google-only accounts. Existing accounts (field missing) read as true.
+        hasPassword: { type: Boolean, default: true },
+        // Google's stable account id ("sub" in the ID token), set when the user signs in with Google
+        googleId: { type: String, unique: true, sparse: true, select: false },
+        // Set when the password changes; tokens issued before this moment stop working (see middleware/auth.js)
+        passwordChangedAt: { type: Date, default: null },
     },
     {
         timestamps: { createdAt: true, updatedAt: false },
@@ -33,6 +42,8 @@ const userSchema = new mongoose.Schema(
                 delete ret._id;
                 delete ret.__v;
                 delete ret.passwordHash;
+                delete ret.passwordChangedAt;
+                delete ret.googleId;
                 return ret;
             },
         },

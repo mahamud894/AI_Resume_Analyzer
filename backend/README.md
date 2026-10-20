@@ -51,8 +51,10 @@ backend/
 │       ├── ApiError.js        # Error with an HTTP status code
 │       ├── token.js           # sign / verify JWT
 │       └── files.js           # upload path helpers, PDF magic-byte check
+├── tests/                     # Vitest + Supertest API tests (in-memory MongoDB, Gemini mocked)
 ├── uploads/                   # Uploaded PDFs + preview images (git-ignored)
 ├── .env.example               # Template for your .env
+├── Dockerfile                 # Production image (used by ../docker-compose.yml)
 └── package.json
 ```
 
@@ -73,6 +75,8 @@ npm run dev                 # starts on http://localhost:5000 and restarts when 
 | `npm run dev`   | Start with auto-restart (`node --watch-path`, watches only `src/`, `server.js`, `.env` — not `node_modules`) |
 | `npm start`     | Start normally (production)                              |
 | `npm run seed`  | Insert the demo user + resume + analysis (`../database/seed.js`) |
+| `npm test`      | Run the API tests once. They use a temporary in-memory MongoDB and a mocked Gemini, so no `.env`, Atlas or API quota is needed (the first run downloads MongoDB) |
+| `npm run test:watch` | Re-run the tests whenever a file changes                 |
 
 ### Environment variables (`backend/.env`)
 
@@ -113,7 +117,10 @@ the JWT returned by register/login. Tokens expire after 7 days.
 | GET    | `/health`                 |      | –                                                         | 200 `{ status, time }` |
 | POST   | `/auth/register`          |      | JSON `{ username, email, password }`                      | 201 `{ token, user }` |
 | POST   | `/auth/login`             |      | JSON `{ email, password }`                                | 200 `{ token, user }` |
+| POST   | `/auth/google`            |      | JSON `{ credential }` (Google ID token)                   | 201 new / 200 existing `{ token, user }` · 401 invalid or unverified · 503 `GOOGLE_CLIENT_ID` not set |
 | GET    | `/auth/me`                | 🔒   | –                                                         | 200 `{ user }` |
+| PUT    | `/auth/password`          | 🔒   | JSON `{ currentPassword, newPassword }` (Google-only: `{ newPassword }`) | 200 `{ token, user }` · 400 wrong current password |
+| DELETE | `/auth/me`                | 🔒   | JSON `{ password }` (Google-only: `{ confirmEmail }`)     | 200 `{ message }` · 400 wrong password |
 | POST   | `/resume/upload`          | 🔒   | `multipart/form-data`: `resume` (PDF, required), `image` (PNG/JPEG, optional) | 201 `{ resume }` |
 | POST   | `/resume/analyze`         | 🔒   | JSON `{ resumeId, companyName?, jobTitle, jobDescription }` | 201 `{ analysis }` |
 | GET    | `/resume`                 | 🔒   | –                                                         | 200 `{ resumes: [...] }` (newest first, each with `analyses`) |
@@ -167,6 +174,18 @@ Errors: `400` invalid input · `401` `"Invalid email or password"` · `429` too 
 { "user": { "id": "6aca150b1f91ced92f7ef8c0", "username": "tanveer", "email": "tanveer@example.com", "createdAt": "..." } }
 ```
 Errors: `401` missing / invalid / expired token.
+
+#### `PUT /api/auth/password` 🔒
+
+Body `{ "currentPassword": "Demo@1234", "newPassword": "NewPass@5678" }` (new password 6-72 characters).
+Returns `{ token, user }` like login. The user's `passwordChangedAt` is set, so **every token issued before the
+change stops working** (other devices are logged out); the client stores the new token. A wrong current password
+returns `400`, not `401`, so the frontend does not log the user out for a typo.
+
+#### `DELETE /api/auth/me` 🔒
+
+Body `{ "password": "Demo@1234" }`. Deletes the user, all of their resumes, analyses, improved resumes,
+cover letters and the uploaded files. Wrong password → `400`.
 
 #### `POST /api/resume/upload` 🔒
 
@@ -457,9 +476,11 @@ curl -X POST http://localhost:5000/api/resume/analyze -H "Authorization: Bearer 
 | Threat                         | Protection                                                                 |
 |--------------------------------|----------------------------------------------------------------------------|
 | Stolen passwords               | bcrypt hashing (10 salt rounds); hash is `select: false` and never sent to clients |
+| Stolen session after a password change | `passwordChangedAt`: tokens issued before the change are rejected with `401` |
 | Unauthorized access            | `requireAuth` middleware verifies the JWT on every resume route            |
 | Reading other users' data      | Every query filters by `userId = req.user._id`; others get `404`           |
 | Password guessing              | `express-rate-limit`: 20 login/register attempts per 15 min per IP         |
+| Using up the Gemini quota      | `express-rate-limit`: 15 AI requests (analyze + improve + cover letter) per hour per user → `429` |
 | Malicious uploads              | PDF-only (extension + MIME + `%PDF-` magic bytes), 10 MB limit, max 2 files, random server-side file names |
 | Bad input / NoSQL injection    | `express-validator` on all bodies and ids; Mongoose `strictQuery`          |
 | Cross-site requests            | CORS allows only `CLIENT_URL`                                              |

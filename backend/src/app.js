@@ -23,7 +23,7 @@ app.use(
 );
 
 app.use(express.json({ limit: "1mb" }));
-if (!config.isProduction) app.use(morgan("dev"));
+if (config.nodeEnv === "development") app.use(morgan("dev"));
 
 app.get("/api/health", (_req, res) => res.json({ status: "ok", time: new Date().toISOString() }));
 app.use("/api/auth", authRoutes);

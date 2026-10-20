@@ -1,6 +1,7 @@
 import {type FormEvent, useState} from 'react'
 import Navbar from "~/components/Navbar";
 import FileUploader from "~/components/FileUploader";
+import JobFields, {type JobDetails, readJobDetails} from "~/components/JobFields";
 import {useNavigate} from "react-router";
 import {convertPdfToImage} from "~/lib/pdf2img";
 import {resumeApi} from "~/lib/api";
@@ -23,7 +24,7 @@ const Upload = () => {
         setFile(file)
     }
 
-    const handleAnalyze = async ({ companyName, jobTitle, jobDescription, file }: { companyName: string, jobTitle: string, jobDescription: string, file: File  }) => {
+    const handleAnalyze = async (job: JobDetails, file: File) => {
         setIsProcessing(true);
         let resumeId: string | null = null;
 
@@ -38,7 +39,7 @@ const Upload = () => {
             resumeId = resume.id;
 
             setStatusText('Analyzing... (this can take up to 30 seconds)');
-            await resumeApi.analyze({ resumeId, companyName, jobTitle, jobDescription });
+            await resumeApi.analyze({ resumeId, ...job });
 
             setStatusText('Analysis complete, redirecting...');
             navigate(`/resume/${resumeId}`);
@@ -53,17 +54,11 @@ const Upload = () => {
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setError('');
-        const formData = new FormData(e.currentTarget);
-
-        const companyName = String(formData.get('company-name') || '').trim();
-        const jobTitle = String(formData.get('job-title') || '').trim();
-        const jobDescription = String(formData.get('job-description') || '').trim();
-
-        if (!jobTitle) return setError('Please enter the job title.');
-        if (jobDescription.length < 20) return setError('Please paste the job description (at least 20 characters).');
+        const { job, error } = readJobDetails(e.currentTarget);
+        if (error) return setError(error);
         if (!file) return setError('Please upload your resume as a PDF.');
 
-        handleAnalyze({ companyName, jobTitle, jobDescription, file });
+        handleAnalyze(job!, file);
     }
 
     return (
@@ -83,18 +78,7 @@ const Upload = () => {
                     )}
                     {!isProcessing && (
                         <form id="upload-form" onSubmit={handleSubmit} className="flex flex-col gap-4 sm:gap-5 mt-2 sm:mt-8 text-left">
-                            <div className="form-div">
-                                <label htmlFor="company-name">Company Name</label>
-                                <input type="text" name="company-name" placeholder="Company Name" id="company-name" maxLength={100} />
-                            </div>
-                            <div className="form-div">
-                                <label htmlFor="job-title">Job Title</label>
-                                <input type="text" name="job-title" placeholder="Job Title" id="job-title" maxLength={100} required />
-                            </div>
-                            <div className="form-div">
-                                <label htmlFor="job-description">Job Description</label>
-                                <textarea rows={6} className="resize-y md:min-h-[220px] lg:min-h-[260px]" name="job-description" placeholder="Job Description" id="job-description" maxLength={10000} required />
-                            </div>
+                            <JobFields />
 
                             <div className="form-div">
                                 <label htmlFor="uploader">Upload Resume</label>

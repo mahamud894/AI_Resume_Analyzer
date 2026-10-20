@@ -1,6 +1,8 @@
 import {type FormEvent, useEffect, useState} from "react";
 import {useNavigate, useSearchParams} from "react-router";
+import {GoogleLogin, GoogleOAuthProvider} from "@react-oauth/google";
 import {useAuthStore} from "~/lib/auth";
+import {GOOGLE_CLIENT_ID} from "~/constants";
 
 export const meta = () => ([
     { title: 'Resumind | Auth' },
@@ -10,7 +12,7 @@ export const meta = () => ([
 type Mode = 'login' | 'signup';
 
 const Auth = () => {
-    const { isLoading, isAuthenticated, error, login, register, clearError } = useAuthStore();
+    const { isLoading, isAuthenticated, error, login, register, loginWithGoogle, clearError } = useAuthStore();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const [mode, setMode] = useState<Mode>('login');
@@ -109,6 +111,30 @@ const Auth = () => {
                             </p>
                         </button>
                     </form>
+
+                    {/* Second way to log in. Hidden until VITE_GOOGLE_CLIENT_ID is set in frontend/.env */}
+                    {GOOGLE_CLIENT_ID && (
+                        <div className="flex flex-col items-center gap-4 w-full">
+                            <div className="flex items-center gap-3 w-full text-sm text-gray-400" aria-hidden="true">
+                                <span className="h-px flex-1 bg-gray-200" />or<span className="h-px flex-1 bg-gray-200" />
+                            </div>
+                            <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID} locale="en">
+                                <GoogleLogin
+                                    key={mode}
+                                    text={mode === 'login' ? 'continue_with' : 'signup_with'}
+                                    shape="pill"
+                                    size="large"
+                                    width="300"
+                                    onSuccess={({ credential }) => {
+                                        setFormError('');
+                                        clearError();
+                                        if (credential) loginWithGoogle(credential);
+                                    }}
+                                    onError={() => setFormError('Google sign-in did not complete. Please try again.')}
+                                />
+                            </GoogleOAuthProvider>
+                        </div>
+                    )}
 
                     <p className="text-center text-dark-200 flex flex-wrap items-center justify-center gap-x-1">
                         {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}

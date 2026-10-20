@@ -4,6 +4,8 @@ interface User {
     id: string;
     username: string;
     email: string;
+    // false for accounts created with "Sign in with Google" that have not set a password yet
+    hasPassword: boolean;
     createdAt: string;
 }
 

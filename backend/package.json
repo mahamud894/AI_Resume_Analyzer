@@ -8,7 +8,9 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch-path=src --watch-path=server.js --watch-path=.env server.js",
-    "seed": "node ../database/seed.js"
+    "seed": "node ../database/seed.js",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "engines": {
     "node": ">=20"
@@ -21,11 +23,17 @@
     "express": "^5.3.0",
     "express-rate-limit": "^8.7.1",
     "express-validator": "^7.3.2",
+    "google-auth-library": "^11.3.1",
     "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.11.1",
     "morgan": "^1.12.1",
     "multer": "^2.4.0",
     "pdf-parse": "^2.4.5"
+  },
+  "devDependencies": {
+    "mongodb-memory-server": "^11.3.0",
+    "supertest": "^7.3.1",
+    "vitest": "^5.0.5"
   }
 }

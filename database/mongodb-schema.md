@@ -87,6 +87,7 @@ improved resumes, cover letters and files (see `deleteResume` in `resumeControll
 | `username`     | String   | yes      | Unique, trimmed, 3–30 chars, letters/numbers/`_`/`.`      |
 | `email`        | String   | yes      | Unique, stored lowercase                                  |
 | `passwordHash` | String   | yes      | bcrypt hash (10 salt rounds). `select: false` — never returned by the API |
+| `passwordChangedAt` | Date | no      | Default `null`. Set on password change; JWTs issued before it are rejected. Not returned by the API |
 | `createdAt`    | Date     | auto     | Set by Mongoose `timestamps`                              |
 
 ### 2.2 `resumes`

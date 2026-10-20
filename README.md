@@ -22,14 +22,26 @@ Every analysis is stored, so users can track all their applications in one dashb
 
 ## 👥 2. Team Engineering Roster & Roles
 
-1. **Mahammad Hasan (ID: 11220320828)** — _Team Leader / Frontend Architecture Lead_
-   - Boilerplate compilation, global store setup via Zustand, and component logic.
+1. **Mahammad Hasan (ID: 11220320828)** — _Team Leader / Frontend Developer + UI/UX Designer_
+   - React Router 8 app structure, Zustand auth store, the API client (`lib/api.ts`) and protected routes.
+   - All pages: auth, upload, history dashboard, review page, Europass CV editor, cover letter, wipe.
+   - UI/UX design with Tailwind CSS 4: responsive layouts for mobile, tablet and desktop.
+   - New: **Analyze for another job** (analysis switcher), **Delete** button on resume cards, **Account page**
+     (change password, delete account) and the shared job form component.
 2. **Shanawaz Sakib (ID: 11220320916)** — _Core System Integration Engineer_
-   - Puter.js SDK orchestration, AI semantic prompt engineering, and response mapping.
+   - Google Gemini integration: JSON-mode prompts and schemas for analysis, Europass rewrite and cover letter,
+     retries for temporary AI errors, and the Week 08 AI response mapper / cache prototype.
+   - Connecting frontend, backend and AI end to end (PDF → text → Gemini → saved feedback → UI).
+   - New: **AI rate limit** (15 Gemini requests per user per hour) and **Docker Compose** setup for the whole app.
 3. **Ashikur Rahman Himel (ID: 11220320833)** — _Database Storage & Quality Controller_
-   - File system streams handling, input validations, error-catch routines, and QA.
-4. **Rasel Ratul (ID: 11220320827)** — _UI-UX & Tailwind Matrix Designer_
-   - High-fidelity interface development using Tailwind CSS v4 layout systems.
+   - MongoDB Atlas schema and Mongoose models (ERD, `mongodb-schema.md`, `schema.sql`, seed data),
+     uploaded file storage and input validation.
+   - New: **automated API tests** (Vitest + Supertest, in-memory MongoDB) and the **dependency security audit**
+     (frontend vulnerabilities fixed, 0 remaining).
+4. **Rasel Ratul (ID: 11220320827)** — _Backend Developer_
+   - Express 5 REST API: JWT authentication, Multer PDF upload, controllers, routes and central error handling.
+   - Security: bcrypt, helmet, CORS, login rate limiting, ownership checks and PDF magic-byte check.
+   - New: **change password** (logs out other devices) and **delete account** endpoints, and the backend **Dockerfile**.
 
 ---
 
@@ -75,7 +87,7 @@ Every analysis is stored, so users can track all their applications in one dashb
 | Backend  | Node.js, Express 5, Mongoose 9, JSON Web Tokens, bcryptjs, Multer, pdf-parse, express-validator, helmet, cors, express-rate-limit |
 | Database | MongoDB Atlas (cloud, free M0 cluster)                                                                                            |
 | AI       | Google Gemini API (`@google/genai`, structured JSON output)                                                                       |
-| Tooling  | Vite, Docker (frontend), npm                                                                                                      |
+| Tooling  | Vite, Docker + Docker Compose, Vitest + Supertest (API tests), npm                                                                |
 
 ---
 
@@ -100,7 +112,8 @@ AI-Resume-Analyzer/
 │   │   ├── root.tsx
 │   │   └── app.css             # Tailwind + Europass CV, cover letter and print (A4) styles
 │   ├── public/                 # Images, icons, README hero image
-│   ├── utils/                  # aiMapper.js, cache.js
+│   ├── utils/                  # aiMapper.js, cache.js — Week 08 prototype (client-side AI mapping + cache),
+│   │                           # kept for the record; the app now gets validated feedback from the backend
 │   ├── types/index.d.ts        # User, Resume, Analysis, Feedback, EuropassCv, ImprovedResume, CoverLetter types
 │   ├── .env.example
 │   ├── Dockerfile
@@ -126,6 +139,7 @@ AI-Resume-Analyzer/
 │   └── sample-data.json        # Example documents
 ├── documentation/              # Submitted academic reports (proposal, SRS, design, progress)
 ├── screenshots/                # UI screenshots
+├── docker-compose.yml          # Frontend + backend containers (docker compose up --build)
 ├── .gitignore
 └── README.md
 ```
@@ -134,13 +148,19 @@ AI-Resume-Analyzer/
 
 ## 🔑 6. Features
 
-- **Sign up / Log in** with email and password (bcrypt-hashed passwords, JWT sessions valid for 7 days).
+- **Two ways to sign up / log in**:
+  - **Email and password** (bcrypt-hashed passwords, JWT sessions valid for 7 days).
+  - **Sign in with Google**: the backend verifies Google's ID token (signature, our Client ID, expiry, verified
+    email). A Google login with the same email as an existing account is linked to it, so there are no duplicates.
+    Google-only accounts can set a password later on the Account page to use both ways.
 - **Protected pages**: logged-out visitors are redirected to `/auth?next=…` and returned to the page afterwards.
 - **Upload & analyze**: company name, job title, job description + PDF resume (drag & drop, PDF only, max 10 MB).
 - **AI feedback** in a fixed structure: overall score, ATS score + tips, Tone & Style, Content, Structure and Skills,
   each with a score and explained "good" / "improve" tips.
-- **History dashboard**: every resume with its latest score and preview image.
+- **History dashboard**: every resume with its latest score and preview image, and a **Delete** button on each card.
 - **Review page**: resume preview (click to open the original PDF) next to the full feedback.
+- **Analyze for another job**: run the same resume against a new job description without uploading it again.
+  A dropdown switches between all jobs the resume was analyzed for (the choice is kept in the URL, `?analysis=<id>`).
 - **Improve My Resume (Europass)**: after an analysis, one click rewrites the resume in the official
   **EU Europass CV** format, based on the feedback tips and the job description:
   - **"What we improved" report**: every change grouped by ATS / Tone & Style / Content / Structure / Skills,
@@ -165,6 +185,8 @@ AI-Resume-Analyzer/
   - **Never invents facts**: achievements come only from your CV. Unknown company details become yellow `[placeholders]`.
   - **"Why this letter works"** panel: which CV facts were matched to which job requirements, plus the word count.
   - **Edit + Save** (stored in the database), **Copy text**, **Download PDF** (one A4 page) and **Regenerate**.
+- **Account page** (`/account`, click "Hi, name" in the navbar): profile details, **change password** (logs out
+  your other devices) and **delete account** (removes the account and all of its data and files; asks for the password).
 - **Wipe page** (`/wipe`): delete all of your resumes, analyses, improved resumes, cover letters and files.
 - **Logout** from the navbar.
 
@@ -173,7 +195,7 @@ AI-Resume-Analyzer/
 - Frontend: required fields, password confirmation, PDF-only dropzone with size limit, clear error messages.
 - Backend: `express-validator` on every input, PDF magic-byte check, Multer size limit, JWT auth middleware,
   per-user ownership checks, CORS restricted to the frontend URL, helmet headers, login rate limiting,
-  central error handler. Secrets live only in `.env` files, which are git-ignored.
+  AI rate limiting (15 Gemini requests per user per hour), central error handler. Secrets live only in `.env` files, which are git-ignored.
   Details: [backend/README.md › Security](backend/README.md#4-security-measures).
 
 ---
@@ -204,6 +226,19 @@ AI-Resume-Analyzer/
 
 Open [aistudio.google.com/apikey](https://aistudio.google.com/apikey), sign in with Google, click **Create API key**
 and copy the key (starts with `AIza`). It is free; the free tier has per-minute limits.
+
+### 0c) Optional: "Sign in with Google" (one time)
+
+The app works without it (the Google button is simply hidden). To turn it on:
+
+1. [console.cloud.google.com](https://console.cloud.google.com) → create a project, e.g. "Resumind".
+2. **APIs & Services → OAuth consent screen**: app name + your email, user type **External**; add your team's
+   Gmail addresses under **Test users**.
+3. **Credentials → Create credentials → OAuth client ID** → type **Web application**. Under
+   **Authorized JavaScript origins** add `http://localhost:5173` and `http://localhost:3000`.
+4. Copy the **Client ID** (`…apps.googleusercontent.com`) into **both** `backend/.env` (`GOOGLE_CLIENT_ID`) and
+   `frontend/.env` (`VITE_GOOGLE_CLIENT_ID`), then restart both `npm run dev` terminals.
+   The Client ID is public; the **Client Secret is not needed**, do not put it anywhere.
 
 ### 1) Clone
 
@@ -249,7 +284,30 @@ cd frontend && npm run build && npm start     # serves the built app
 cd backend  && npm start
 ```
 
-Docker (frontend): `docker build --build-arg VITE_API_URL=https://your-api.example.com -t resumind-frontend frontend`
+**Docker (whole app):** create `backend/.env` first (step 2), then from the project root:
+
+```bash
+docker compose up --build     # frontend → http://localhost:3000, backend → http://localhost:5000
+# With "Sign in with Google": pass backend/.env so the frontend image gets GOOGLE_CLIENT_ID too
+docker compose --env-file backend/.env up --build
+docker compose down           # stop (uploaded files stay in the "uploads" volume)
+```
+
+The backend container reads its secrets from `backend/.env` at run time (they are never copied into the image)
+and uses your Atlas database. For a deployed API, change `VITE_API_URL` and `CLIENT_URL` in `docker-compose.yml`.
+
+- Stop `npm run dev` first: the containers need ports **5000** and **3000**.
+- Uploaded files live in the Docker volume `uploads`, not in `backend/uploads`. Both setups share the same Atlas
+  database, so resumes uploaded with `npm run dev` appear in the Docker app too, but their PDF and preview show
+  "File not found". Upload them again inside the Docker app (or the other way round).
+- Docker Desktop on Windows needs WSL 2, which needs CPU virtualization: after installing, **restart Windows**,
+  and if it still does not start, enable *Intel Virtualization Technology* in the BIOS.
+
+### Tests
+
+```bash
+cd backend && npm test        # API tests with an in-memory MongoDB and a mocked Gemini (no .env or quota needed)
+```
 
 ### 5) Troubleshooting
 
@@ -282,6 +340,7 @@ Docker (frontend): `docker build --build-arg VITE_API_URL=https://your-api.examp
 | `CLIENT_URL`       |          | Frontend origin for CORS, default `http://localhost:5173`                |
 | `JWT_EXPIRES_IN`   |          | Token lifetime, default `7d`                                             |
 | `GEMINI_MODEL`     |          | Default `gemini-flash-latest`                                            |
+| `GOOGLE_CLIENT_ID` |          | OAuth Client ID for "Sign in with Google" (empty = turned off, 503)      |
 | `MAX_FILE_SIZE_MB` |          | Upload limit, default `10`                                               |
 
 **frontend/.env**
@@ -289,6 +348,7 @@ Docker (frontend): `docker build --build-arg VITE_API_URL=https://your-api.examp
 | Variable       | Description                                       |
 | -------------- | ------------------------------------------------- |
 | `VITE_API_URL` | Backend base URL, default `http://localhost:5000` |
+| `VITE_GOOGLE_CLIENT_ID` | Same Client ID as `GOOGLE_CLIENT_ID`; empty = Google button hidden |
 
 ---
 
@@ -296,24 +356,27 @@ Docker (frontend): `docker build --build-arg VITE_API_URL=https://your-api.examp
 
 Base URL `http://localhost:5000/api` · 🔒 = requires `Authorization: Bearer <token>`
 
-| Method | Route                                   | Auth | Purpose                                                 |
-| ------ | --------------------------------------- | ---- | ------------------------------------------------------- |
-| POST   | `/auth/register`                        |      | Create account → `{ token, user }`                      |
-| POST   | `/auth/login`                           |      | Log in → `{ token, user }`                              |
-| GET    | `/auth/me`                              | 🔒   | Current user                                            |
-| POST   | `/resume/upload`                        | 🔒   | Upload PDF (+ preview image)                            |
-| POST   | `/resume/analyze`                       | 🔒   | Analyze a resume against a job with Gemini              |
-| GET    | `/resume`                               | 🔒   | My history (resumes with their analyses)                |
-| GET    | `/resume/:id`                           | 🔒   | One resume with its analyses                            |
-| GET    | `/resume/:id/file`                      | 🔒   | Download the PDF                                        |
-| GET    | `/resume/:id/image`                     | 🔒   | Download the preview image                              |
-| DELETE | `/resume/:id`                           | 🔒   | Delete resume, its analyses, improved resumes, cover letters and files |
-| POST   | `/resume/analysis/:analysisId/improve`  | 🔒   | Generate / regenerate the Europass improved resume      |
-| GET    | `/resume/analysis/:analysisId/improved` | 🔒   | Get the saved improved resume (404 if none yet)         |
-| PUT    | `/resume/analysis/:analysisId/improved` | 🔒   | Save your inline CV edits (`null` = reset to AI version) |
-| POST   | `/resume/analysis/:analysisId/cover-letter` | 🔒 | Generate / regenerate the cover letter (needs the improved resume) |
-| GET    | `/resume/analysis/:analysisId/cover-letter` | 🔒 | Get the saved cover letter (404 if none yet)          |
-| PUT    | `/resume/analysis/:analysisId/cover-letter` | 🔒 | Save your edited letter text                          |
+| Method | Route                                       | Auth | Purpose                                                                |
+| ------ | ------------------------------------------- | ---- | ---------------------------------------------------------------------- |
+| POST   | `/auth/register`                            |      | Create account → `{ token, user }`                                     |
+| POST   | `/auth/login`                               |      | Log in → `{ token, user }`                                             |
+| POST   | `/auth/google`                              |      | Sign in with Google: `{ credential }` (ID token) → `{ token, user }`   |
+| GET    | `/auth/me`                                  | 🔒   | Current user                                                           |
+| PUT    | `/auth/password`                            | 🔒   | Change password (Google-only accounts: set a first one) → new `{ token, user }` |
+| DELETE | `/auth/me`                                  | 🔒   | Delete the account and all its data (`{ password }`, or `{ confirmEmail }` for Google-only) |
+| POST   | `/resume/upload`                            | 🔒   | Upload PDF (+ preview image)                                           |
+| POST   | `/resume/analyze`                           | 🔒   | Analyze a resume against a job with Gemini                             |
+| GET    | `/resume`                                   | 🔒   | My history (resumes with their analyses)                               |
+| GET    | `/resume/:id`                               | 🔒   | One resume with its analyses                                           |
+| GET    | `/resume/:id/file`                          | 🔒   | Download the PDF                                                       |
+| GET    | `/resume/:id/image`                         | 🔒   | Download the preview image                                             |
+| DELETE | `/resume/:id`                               | 🔒   | Delete resume, its analyses, improved resumes, cover letters and files |
+| POST   | `/resume/analysis/:analysisId/improve`      | 🔒   | Generate / regenerate the Europass improved resume                     |
+| GET    | `/resume/analysis/:analysisId/improved`     | 🔒   | Get the saved improved resume (404 if none yet)                        |
+| PUT    | `/resume/analysis/:analysisId/improved`     | 🔒   | Save your inline CV edits (`null` = reset to AI version)               |
+| POST   | `/resume/analysis/:analysisId/cover-letter` | 🔒   | Generate / regenerate the cover letter (needs the improved resume)     |
+| GET    | `/resume/analysis/:analysisId/cover-letter` | 🔒   | Get the saved cover letter (404 if none yet)                           |
+| PUT    | `/resume/analysis/:analysisId/cover-letter` | 🔒   | Save your edited letter text                                           |
 
 Full request/response examples and error codes: **[backend/README.md](backend/README.md)**.
 Database design: **[database/mongodb-schema.md](database/mongodb-schema.md)**.
@@ -324,7 +387,8 @@ Database design: **[database/mongodb-schema.md](database/mongodb-schema.md)**.
 
 `users` **1 ── N** `resumes` **1 ── N** `analyses` **1 ── 0..1** `improvedresumes` **1 ── 0..1** `coverletters`
 
-- **users** — username, email (unique), passwordHash, createdAt
+- **users** — username, email (unique), passwordHash (empty for Google-only accounts), hasPassword, googleId (unique),
+  passwordChangedAt, createdAt
 - **resumes** — userId → users, filePath, imagePath, originalName, fileSize, uploadDate
 - **analyses** — resumeId → resumes, userId → users, companyName, jobTitle, jobDescription, feedback (embedded), createdAt
 - **improvedresumes** — analysisId → analyses (unique), resumeId → resumes, userId → users, europassCv (embedded),
