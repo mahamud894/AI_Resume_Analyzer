@@ -3,9 +3,9 @@ import CoverLetter from "../models/CoverLetter.js";
 import ImprovedResume from "../models/ImprovedResume.js";
 import Resume from "../models/Resume.js";
 import { analyzeResume } from "../services/geminiService.js";
+import { deleteFiles, isRealPdf, readFile, saveFile, sendFile } from "../services/fileStorage.js";
 import { extractPdfText } from "../services/pdfService.js";
 import ApiError from "../utils/ApiError.js";
-import { isRealPdf, removeFiles, toAbsolutePath, toStoredPath } from "../utils/files.js";
 
 // Newest analysis first whenever we populate a resume's analyses.
 // Each analysis also gets `improved: { id, analysisId, createdAt }` if a Europass version exists.
@@ -27,23 +27,26 @@ async function findOwnResume(id, userId) {
 export async function uploadResume(req, res) {
     const pdf = req.files?.resume?.[0];
     const image = req.files?.image?.[0];
-    const storedPdf = pdf && toStoredPath(pdf.path);
-    const storedImage = image && toStoredPath(image.path);
+    if (!pdf) throw ApiError.badRequest('A PDF file is required in the "resume" field');
+    if (!isRealPdf(pdf.buffer)) throw ApiError.badRequest("Uploaded file is not a valid PDF");
 
+    let fileId = null;
+    let imageId = null;
     try {
-        if (!pdf) throw ApiError.badRequest('A PDF file is required in the "resume" field');
-        if (!(await isRealPdf(pdf.path))) throw ApiError.badRequest("Uploaded file is not a valid PDF");
+        const owner = { userId: req.user._id };
+        fileId = await saveFile(pdf.buffer, { filename: pdf.originalname, contentType: "application/pdf", ...owner });
+        if (image) imageId = await saveFile(image.buffer, { filename: image.originalname, contentType: image.mimetype, ...owner });
 
         const resume = await Resume.create({
             userId: req.user._id,
-            filePath: storedPdf,
-            imagePath: storedImage || null,
+            fileId,
+            imageId,
             originalName: pdf.originalname,
             fileSize: pdf.size,
         });
         res.status(201).json({ resume });
     } catch (err) {
-        await removeFiles(storedPdf, storedImage); // don't leave orphan files behind
+        await deleteFiles(fileId, imageId); // don't leave orphan files behind
         throw err;
     }
 }
@@ -53,7 +56,7 @@ export async function analyze(req, res) {
     const { resumeId, companyName = "", jobTitle, jobDescription } = req.body;
     const resume = await findOwnResume(resumeId, req.user._id);
 
-    const resumeText = await extractPdfText(toAbsolutePath(resume.filePath));
+    const resumeText = await extractPdfText(await readFile(resume.fileId));
     if (resumeText.length < 50) {
         throw new ApiError(
             422,
@@ -93,25 +96,22 @@ export async function getResume(req, res) {
 // GET /api/resume/:id/file   → the original PDF
 export async function getResumeFile(req, res) {
     const resume = await findOwnResume(req.params.id, req.user._id);
-    // Headers go through sendFile so they are only set when the file exists;
-    // otherwise the JSON error would be sent labelled as a PDF.
-    res.sendFile(toAbsolutePath(resume.filePath), {
-        headers: {
-            "Content-Type": "application/pdf",
-            "Content-Disposition": `inline; filename="${encodeURIComponent(resume.originalName)}"`,
-        },
+    // Headers are only set once the file is found, so a missing file still gets a JSON 404
+    await sendFile(res, resume.fileId, {
+        contentType: "application/pdf",
+        disposition: `inline; filename="${encodeURIComponent(resume.originalName)}"`,
     });
 }
 
 // GET /api/resume/:id/image   → the page-1 preview image
 export async function getResumeImage(req, res) {
     const resume = await findOwnResume(req.params.id, req.user._id);
-    if (!resume.imagePath) throw ApiError.notFound("This resume has no preview image");
-    res.sendFile(toAbsolutePath(resume.imagePath));
+    if (!resume.imageId) throw ApiError.notFound("This resume has no preview image");
+    await sendFile(res, resume.imageId);
 }
 
 // DELETE /api/resume/:id   → removes the resume, all its analyses, improved versions,
-// cover letters and the files on disk
+// cover letters and its stored files
 export async function deleteResume(req, res) {
     const resume = await findOwnResume(req.params.id, req.user._id);
 
@@ -120,7 +120,7 @@ export async function deleteResume(req, res) {
     await ImprovedResume.deleteMany({ resumeId: resume._id });
     await Analysis.deleteMany({ resumeId: resume._id });
     await resume.deleteOne();
-    await removeFiles(resume.filePath, resume.imagePath);
+    await deleteFiles(resume.fileId, resume.imageId);
 
     res.json({ message: "Resume deleted", id: resume.id });
 }

@@ -1,10 +1,10 @@
-// Extracts plain text from a PDF file so it can be sent to the AI model.
-import fs from "node:fs/promises";
+// Extracts plain text from a PDF so it can be sent to the AI model.
 import { PDFParse } from "pdf-parse";
 
-export async function extractPdfText(absolutePath) {
-    const data = await fs.readFile(absolutePath);
-    const parser = new PDFParse({ data });
+// `data` is the PDF file as a Buffer (read from GridFS)
+export async function extractPdfText(data) {
+    // pdf-parse takes ownership of the bytes, so it gets its own copy
+    const parser = new PDFParse({ data: new Uint8Array(data) });
     try {
         const result = await parser.getText();
         // Collapse extra blank lines/spaces to keep the prompt small

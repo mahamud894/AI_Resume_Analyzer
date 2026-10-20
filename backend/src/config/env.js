@@ -37,6 +37,9 @@ const config = {
     geminiApiKey: process.env.GEMINI_API_KEY || "",
     geminiModel: process.env.GEMINI_MODEL || "gemini-flash-latest",
     maxFileSizeMb: Number(process.env.MAX_FILE_SIZE_MB) || 10,
+    // Number of proxies in front of the app (1 on Render). 0 = none (local, Docker).
+    trustProxy: Number(process.env.TRUST_PROXY) || 0,
+    // Old disk folder for uploads; only read by scripts/migrate-uploads-to-gridfs.js
     uploadDir: path.join(BACKEND_ROOT, "uploads"),
 };
 

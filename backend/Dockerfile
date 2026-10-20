@@ -9,10 +9,8 @@ RUN npm ci --omit=dev && npm cache clean --force
 COPY server.js ./
 COPY src ./src
 
-# Uploaded PDFs live here; mount a volume on it so they survive container restarts.
-# Only this folder belongs to the unprivileged "node" user: the app can write uploads
-# but cannot change its own code or dependencies (they stay owned by root).
-RUN mkdir -p uploads && chown node:node uploads
+# Uploaded files are stored in MongoDB (GridFS), so the container needs no writable folder.
+# It runs as the unprivileged "node" user: it cannot change its own code or dependencies (owned by root).
 USER node
 
 EXPOSE 5000

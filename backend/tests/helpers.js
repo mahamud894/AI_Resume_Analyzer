@@ -1,32 +1,30 @@
 // Shared helpers: an in-memory MongoDB per test file and quick ways to create users / uploads.
-import fs from "node:fs/promises";
+// Uploaded files live in GridFS inside that in-memory database, so nothing touches the disk.
 import { MongoMemoryServer } from "mongodb-memory-server";
 import mongoose from "mongoose";
 import request from "supertest";
 import app from "../src/app.js";
-import config from "../src/config/env.js";
 import { connectDB, disconnectDB } from "../src/config/db.js";
 
 let mongo;
-let filesBefore;
 
 export async function startDb() {
     mongo = await MongoMemoryServer.create();
     await connectDB(mongo.getUri());
-    filesBefore = new Set(await fs.readdir(config.uploadDir));
 }
 
 export async function stopDb() {
     await disconnectDB();
     await mongo.stop();
-    // Remove any upload a test left behind in backend/uploads
-    for (const name of await fs.readdir(config.uploadDir)) {
-        if (!filesBefore.has(name)) await fs.rm(`${config.uploadDir}/${name}`, { force: true });
-    }
 }
 
+// How many files are stored in GridFS right now
+export const countStoredFiles = () => mongoose.connection.collection("uploads.files").countDocuments();
+
+// Empties every collection, including GridFS's uploads.files / uploads.chunks (they have no Mongoose model)
 export async function clearDb() {
-    await Promise.all(Object.values(mongoose.connection.collections).map((c) => c.deleteMany({})));
+    const collections = await mongoose.connection.db.collections();
+    await Promise.all(collections.map((c) => c.deleteMany({})));
 }
 
 let counter = 0;

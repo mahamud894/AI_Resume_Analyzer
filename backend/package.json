@@ -10,7 +10,8 @@
     "dev": "node --watch-path=src --watch-path=server.js --watch-path=.env server.js",
     "seed": "node ../database/seed.js",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "migrate:uploads": "node scripts/migrate-uploads-to-gridfs.js"
   },
   "engines": {
     "node": ">=20"
