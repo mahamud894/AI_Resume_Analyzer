@@ -1,3 +1,5 @@
+import dns from 'node:dns';
+dns.setServers(['8.8.8.8', '1.1.1.1']);
 // Entry point: connect to MongoDB, then start the HTTP server.
 import config from "./src/config/env.js";
 import { connectDB } from "./src/config/db.js";
