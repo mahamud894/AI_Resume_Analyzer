@@ -3,7 +3,8 @@ import { useLocation, useNavigate } from "react-router";
 import { fetchProtectedFile } from "~/lib/api";
 import { useAuthStore } from "~/lib/auth";
 
-// Route guard: sends logged-out visitors to /auth and brings them back afterwards.
+// Route guard: sends visitors who are not logged in to /auth and brings them back afterwards;
+// after a logout it goes to the landing page instead.
 // Returns true once the user is known to be logged in.
 export function useRequireAuth() {
     const { isLoading, isAuthenticated, signedOut } = useAuthStore();
@@ -12,7 +13,8 @@ export function useRequireAuth() {
 
     useEffect(() => {
         if (!isLoading && !isAuthenticated) {
-            navigate(signedOut ? "/auth" : `/auth?next=${encodeURIComponent(location.pathname)}`, { replace: true });
+            // Logged out on purpose → landing page. Not logged in yet → login, then back to this page.
+            navigate(signedOut ? "/" : `/auth?next=${encodeURIComponent(location.pathname)}`, { replace: true });
         }
     }, [isLoading, isAuthenticated, signedOut, location.pathname]);
 

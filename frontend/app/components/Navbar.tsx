@@ -17,10 +17,11 @@ const Navbar = () => {
 
     const handleLogout = () => {
         setMenuOpen(false);
-        // Leave the protected page first: logging out while still on it makes the route guard
-        // send us to /auth?next=<this page>, and the next person to log in would land there
-        navigate('/auth', { replace: true });
+        // Log out and go to the landing page in the same update (React batches both), so the
+        // protected page unmounts before its route guard could send us to /auth?next=<this page>.
+        // Order matters: the landing page sends logged-in users to /dashboard.
         logout();
+        navigate('/', { replace: true });
     }
 
     // Mobile menu: close on outside click/tap and on Escape

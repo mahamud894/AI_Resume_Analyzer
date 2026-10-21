@@ -61,8 +61,8 @@ const Account = () => {
         setIsDeleting(true);
         try {
             await deleteAccount(user?.hasPassword ? { password: typed } : { confirmEmail: typed });
-            navigate('/auth', { replace: true });
             logout();
+            navigate('/', { replace: true }); // account is gone: back to the landing page
         } catch (err) {
             setDeleteError(errorText(err));
             setIsDeleting(false);
