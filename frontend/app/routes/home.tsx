@@ -1,6 +1,7 @@
 import type { Route } from "./+types/home";
 import Navbar from "~/components/Navbar";
 import ResumeCard from "~/components/ResumeCard";
+import InfoSections, {CallToAction, Footer} from "~/components/LandingSections";
 import {Link} from "react-router";
 import {useEffect, useState} from "react";
 import {resumeApi} from "~/lib/api";
@@ -65,5 +66,18 @@ export default function Home() {
           </div>
       )}
     </section>
+
+    {/* Same information as the landing page, below your resumes */}
+    <InfoSections />
+    <CallToAction
+        title="Applying for another job?"
+        text="Upload your resume with the new job description and get a fresh score, Europass CV and cover letter."
+        action={
+          <Link to="/upload" className="primary-button sm:w-fit px-10 text-lg font-semibold">
+            Analyze a Resume
+          </Link>
+        }
+    />
+    <Footer />
   </main>
 }

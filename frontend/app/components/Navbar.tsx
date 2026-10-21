@@ -2,6 +2,13 @@ import {useEffect, useRef, useState} from "react";
 import {Link, useNavigate} from "react-router";
 import {useAuthStore} from "~/lib/auth";
 
+// Same sections as on the landing page; on the dashboard they sit below the resume list
+const SECTIONS = [
+    { to: '/dashboard#how-it-works', label: 'How it works' },
+    { to: '/dashboard#features', label: 'Features' },
+    { to: '/dashboard#team', label: 'Team' },
+];
+
 const Navbar = () => {
     const { user, logout } = useAuthStore();
     const navigate = useNavigate();
@@ -34,10 +41,19 @@ const Navbar = () => {
     }, [menuOpen]);
 
     return (
-        <nav className="navbar" ref={navRef}>
+        <nav className="navbar sticky top-4 z-40 shadow-sm" ref={navRef}>
             <Link to="/dashboard" className="flex items-center min-h-11">
                 <p className="text-2xl font-bold text-gradient">RESUMIND</p>
             </Link>
+
+            {/* Section links: large screens only (on phones they are in the menu) */}
+            <div className="hidden lg:flex items-center gap-8">
+                {SECTIONS.map((s) => (
+                    <Link key={s.to} to={s.to} className="text-dark-200 hover:text-[#606beb] transition-colors">
+                        {s.label}
+                    </Link>
+                ))}
+            </div>
 
             {/* Tablet and desktop: inline */}
             <div className="hidden md:flex flex-row items-center gap-4">
@@ -76,6 +92,13 @@ const Navbar = () => {
                     {user && (
                         <p className="text-dark-200 break-words">Hi, <b>{user.username}</b></p>
                     )}
+                    {SECTIONS.map((s) => (
+                        <Link key={s.to} to={s.to} onClick={() => setMenuOpen(false)}
+                              className="min-h-11 flex items-center px-2 rounded-xl text-dark-200 hover:bg-gray-50">
+                            {s.label}
+                        </Link>
+                    ))}
+                    <div className="h-px bg-gray-100" />
                     <Link to="/upload" className="primary-button" onClick={() => setMenuOpen(false)}>
                         Upload Resume
                     </Link>
