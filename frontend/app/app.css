@@ -392,3 +392,27 @@
   }
   .letter-body p, .letter-plain p { break-inside: avoid; }
 }
+
+/* ------------------------------------------------------------------ */
+/* Log in / Sign up background (same look as the landing-page popup)  */
+/* ------------------------------------------------------------------ */
+@keyframes auth-gradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@keyframes auth-blob {
+  0% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -50px) scale(1.1); }
+  66% { transform: translate(-20px, 20px) scale(0.9); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+.auth-bg {
+  background: linear-gradient(-45deg, #f8fafc, #e0e7ff, #fae8ff, #f8fafc);
+  background-size: 400% 400%;
+  animation: auth-gradient 15s ease infinite;
+}
+.auth-blob { animation: auth-blob 10s infinite alternate; }
+@media (prefers-reduced-motion: reduce) {
+  .auth-bg, .auth-blob { animation: none; }
+}

@@ -2,9 +2,11 @@
 // (Mona Sans, text-gradient headings, primary-gradient buttons, bg-main.svg, white rounded cards)
 // and shows a sample report built from the real result-page components.
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router";
+import { Link, Navigate } from "react-router";
+import AuthCard, { type AuthMode } from "~/components/AuthCard";
 import Summary from "~/components/Summary";
 import ScoreCircle from "~/components/ScoreCircle";
+import { tokenStorage } from "~/lib/api";
 import { useAuthStore } from "~/lib/auth";
 
 export const meta = () => [
@@ -111,7 +113,7 @@ function SectionHeading({ eyebrow, title, text }: { eyebrow: string; title: stri
     );
 }
 
-function LandingNav({ loggedIn }: { loggedIn: boolean }) {
+function LandingNav({ onAuth }: { onAuth: (mode: AuthMode) => void }) {
     const [menuOpen, setMenuOpen] = useState(false);
     const navRef = useRef<HTMLElement>(null);
 
@@ -152,14 +154,8 @@ function LandingNav({ loggedIn }: { loggedIn: boolean }) {
             </div>
 
             <div className="hidden md:flex items-center gap-3">
-                {loggedIn ? (
-                    <Link to="/dashboard" className="primary-button w-fit px-6">Go to Dashboard</Link>
-                ) : (
-                    <>
-                        <Link to="/auth?next=/dashboard" className="secondary-button">Log In</Link>
-                        <Link to="/auth?mode=signup&next=/upload" className="primary-button w-fit px-6">Get Started</Link>
-                    </>
-                )}
+                <button type="button" onClick={() => onAuth("login")} className="secondary-button">Log In</button>
+                <button type="button" onClick={() => onAuth("signup")} className="primary-button w-fit px-6">Get Started</button>
             </div>
 
             <button type="button"
@@ -182,51 +178,71 @@ function LandingNav({ loggedIn }: { loggedIn: boolean }) {
                         </a>
                     ))}
                     <div className="h-px bg-gray-100 my-1" />
-                    {loggedIn ? (
-                        <Link to="/dashboard" className="primary-button" onClick={close}>Go to Dashboard</Link>
-                    ) : (
-                        <>
-                            <Link to="/auth?mode=signup&next=/upload" className="primary-button" onClick={close}>Get Started</Link>
-                            <Link to="/auth?next=/dashboard" className="secondary-button" onClick={close}>Log In</Link>
-                        </>
-                    )}
+                    <button type="button" className="primary-button" onClick={() => { close(); onAuth("signup"); }}>Get Started</button>
+                    <button type="button" className="secondary-button" onClick={() => { close(); onAuth("login"); }}>Log In</button>
                 </div>
             )}
         </nav>
     );
 }
 
+// Log in / Sign up popup over the landing page (Escape or a click outside closes it)
+function AuthModal({ mode, onClose }: { mode: AuthMode; onClose: () => void }) {
+    useEffect(() => {
+        const onKeyDown = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+        document.addEventListener("keydown", onKeyDown);
+        const overflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden"; // no page scrolling behind the popup
+        return () => {
+            document.removeEventListener("keydown", onKeyDown);
+            document.body.style.overflow = overflow;
+        };
+    }, [onClose]);
+
+    return (
+        <div role="dialog" aria-modal="true" aria-labelledby="auth-title"
+             className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 overflow-y-auto"
+             onClick={(e) => e.target === e.currentTarget && onClose()}>
+            <AuthCard initialMode={mode} onClose={onClose} />
+        </div>
+    );
+}
+
 export default function Landing() {
-    const { isAuthenticated } = useAuthStore();
-    const primaryCta = isAuthenticated
-        ? { to: "/upload", label: "Analyze a Resume" }
-        : { to: "/auth?mode=signup&next=/upload", label: "Analyze My Resume" };
+    const { isAuthenticated, isLoading } = useAuthStore();
+    const [authMode, setAuthMode] = useState<AuthMode | null>(null);
+    const openAuth = (mode: AuthMode) => setAuthMode(mode);
+
+    // Logged in → straight to "your resumes", like the home page before the landing page existed
+    if (isAuthenticated) return <Navigate to="/dashboard" replace />;
+    // A saved login is still being checked: show the loader instead of flashing the landing page
+    if (isLoading && tokenStorage.get()) {
+        return (
+            <main className="bg-[url('/images/bg-main.svg')] bg-cover flex items-center justify-center">
+                <img src="/images/resume-scan-2.gif" alt="Loading" className="w-[200px]" />
+            </main>
+        );
+    }
 
     return (
         <main className="bg-[url('/images/bg-main.svg')] bg-cover bg-top">
-            <LandingNav loggedIn={isAuthenticated} />
+            <LandingNav onAuth={openAuth} />
+            {authMode && <AuthModal mode={authMode} onClose={() => setAuthMode(null)} />}
 
             {/* ---------- Hero ---------- */}
             <section className="main-section !pt-12 sm:!pt-20">
                 <div className="page-heading animate-in fade-in slide-in-from-bottom-4 duration-700 motion-reduce:animate-none">
-                    <span className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-1.5 text-sm text-dark-200 shadow-sm">
-                        <span className="size-2 rounded-full primary-gradient" aria-hidden="true" />
-                        AI resume review powered by Google Gemini
-                    </span>
                     <h1 className="text-balance">Smart feedback for your dream job</h1>
                     <h2 className="max-w-3xl">
                         Upload your resume, paste the job description and get an ATS score, clear tips,
                         a Europass CV and a matching cover letter — all in one place.
                     </h2>
                     <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-                        <Link to={primaryCta.to} className="primary-button sm:w-fit px-8 text-lg font-semibold">
-                            {primaryCta.label}
-                        </Link>
-                        {isAuthenticated ? (
-                            <Link to="/dashboard" className="secondary-button px-8 text-lg">My Dashboard</Link>
-                        ) : (
-                            <a href="#how-it-works" className="secondary-button px-8 text-lg">See How It Works</a>
-                        )}
+                        <button type="button" onClick={() => openAuth("signup")}
+                                className="primary-button sm:w-fit px-8 text-lg font-semibold">
+                            Analyze My Resume
+                        </button>
+                        <a href="#how-it-works" className="secondary-button px-8 text-lg">See How It Works</a>
                     </div>
                 </div>
 
@@ -329,9 +345,10 @@ export default function Landing() {
                         <p className="text-dark-200 text-base sm:text-lg max-w-xl">
                             It takes less than a minute. Upload a PDF and get your first report.
                         </p>
-                        <Link to={primaryCta.to} className="primary-button sm:w-fit px-10 text-lg font-semibold">
-                            {primaryCta.label}
-                        </Link>
+                        <button type="button" onClick={() => openAuth("signup")}
+                                className="primary-button sm:w-fit px-10 text-lg font-semibold">
+                            Analyze My Resume
+                        </button>
                     </div>
                 </div>
             </section>
