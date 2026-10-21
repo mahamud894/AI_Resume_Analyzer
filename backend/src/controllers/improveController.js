@@ -2,7 +2,8 @@ import Analysis from "../models/Analysis.js";
 import "../models/CoverLetter.js"; // registers the model used by populate("coverLetter")
 import ImprovedResume from "../models/ImprovedResume.js";
 import Resume from "../models/Resume.js";
-import { improveResume, normalizeEuropassCv } from "../services/europassService.js";
+import { europassCvToText, improveResume, normalizeEuropassCv } from "../services/europassService.js";
+import { analyzeResume } from "../services/geminiService.js";
 import { readFile } from "../services/fileStorage.js";
 import { extractPdfText } from "../services/pdfService.js";
 import ApiError from "../utils/ApiError.js";
@@ -47,6 +48,8 @@ export async function improve(req, res) {
             userId: req.user._id,
             europassCv,
             changes,
+            afterFeedback: null, // a new CV has not been scored yet
+            scoredAt: null,
             createdAt: new Date(),
         },
         { upsert: true, returnDocument: "after", runValidators: true }
@@ -88,5 +91,32 @@ export async function saveImprovedEdit(req, res) {
         { returnDocument: "after" }
     ).populate(populateCoverLetter);
     if (!improved) throw ApiError.notFound("No improved resume yet for this analysis");
+    res.json({ improved });
+}
+
+// POST /api/resume/analysis/:analysisId/improved/score
+// "Before / After": scores the improved CV (with the user's edits, if any) against the same job,
+// so the result page can show how much the score went up.
+export async function scoreImproved(req, res) {
+    const analysis = await findOwnAnalysis(req.params.analysisId, req.user._id);
+    const improved = await ImprovedResume.findOne({ analysisId: analysis._id, userId: req.user._id });
+    if (!improved) throw ApiError.notFound("No improved resume yet for this analysis");
+
+    const resumeText = europassCvToText(improved.currentCv());
+    if (resumeText.length < 50) {
+        throw new ApiError(422, "The improved CV does not have enough content to score yet.");
+    }
+
+    improved.afterFeedback = await analyzeResume({
+        resumeText,
+        companyName: analysis.companyName,
+        jobTitle: analysis.jobTitle,
+        jobDescription: analysis.jobDescription,
+    });
+    improved.scoredAt = new Date();
+    improved.markModified("afterFeedback");
+    await improved.save();
+    await improved.populate(populateCoverLetter);
+
     res.json({ improved });
 }

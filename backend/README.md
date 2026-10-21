@@ -131,6 +131,7 @@ the JWT returned by register/login. Tokens expire after 7 days.
 | POST   | `/resume/analysis/:analysisId/improve`  | 🔒 | –                                     | 201 `{ improved }` (Europass CV + changes; replaces an existing one) |
 | GET    | `/resume/analysis/:analysisId/improved` | 🔒 | –                                     | 200 `{ improved }` · 404 if not generated yet |
 | PUT    | `/resume/analysis/:analysisId/improved` | 🔒 | JSON `{ europassCv }` (edited CV, ≤ 100 KB) or `{ europassCv: null }` (reset) | 200 `{ improved }` |
+| POST   | `/resume/analysis/:analysisId/improved/score` | 🔒 | – | 200 `{ improved }` with `afterFeedback` (the improved CV scored for the same job) · 404 if no improved resume |
 | POST   | `/resume/analysis/:analysisId/cover-letter` | 🔒 | JSON `{ hiringManagerName?, companyAddress?, jobSource?, tone? }` | 201 `{ coverLetter }` (replaces an existing one) · 400 if no improved resume |
 | GET    | `/resume/analysis/:analysisId/cover-letter` | 🔒 | –                                 | 200 `{ coverLetter }` · 404 if not generated yet |
 | PUT    | `/resume/analysis/:analysisId/cover-letter` | 🔒 | JSON `{ editedText }` (≤ 8000 chars; `""` = reset) | 200 `{ coverLetter }` |
@@ -177,7 +178,7 @@ Errors: `401` missing / invalid / expired token.
 
 #### `PUT /api/auth/password` 🔒
 
-Body `{ "currentPassword": "Demo@1234", "newPassword": "NewPass@5678" }` (new password 6-72 characters).
+Body `{ "currentPassword": "Demo@1234", "newPassword": "NewPass@5678" }` (new password 8-72 characters).
 Returns `{ token, user }` like login. The user's `passwordChangedAt` is set, so **every token issued before the
 change stops working** (other devices are logged out); the client stores the new token. A wrong current password
 returns `400`, not `401`, so the frontend does not log the user out for a typo.
@@ -356,9 +357,17 @@ readable text · `429` Gemini rate limit · `502` Gemini failed · `503` key mis
 
 #### `GET /api/resume/analysis/:analysisId/improved` 🔒
 Returns the saved `{ improved }` (same shape as above), or `404 "No improved resume yet for this analysis"`.
-`GET /api/resume` and `GET /api/resume/:id` also include `improved: { id, analysisId, createdAt }` inside each
+`GET /api/resume` and `GET /api/resume/:id` also include `improved: { id, analysisId, createdAt, afterFeedback, scoredAt }` inside each
 analysis that has one, so the frontend can choose between "Improve My Resume" and "View Improved Resume".
 The improved resume itself includes `coverLetter: { id, improvedResumeId, updatedAt }` when a letter exists.
+
+#### `POST /api/resume/analysis/:analysisId/improved/score` 🔒 — Before / After score
+Scores the improved CV (the user's edited version if saved, otherwise the AI version) against the **same job**
+with the same prompt as `/analyze`. Placeholders such as `[Add your phone]` are removed first, so only real
+content counts. Saves the result as `afterFeedback` (same shape as `analysis.feedback`) and `scoredAt`.
+Uses the AI quota (15 AI requests per user per hour). Regenerating the CV resets `afterFeedback` to `null`.
+`GET /api/resume` and `GET /api/resume/:id` include `afterFeedback` and `scoredAt` inside `analysis.improved`,
+so the result page can draw the score history chart.
 
 #### `PUT /api/resume/analysis/:analysisId/improved` 🔒 — save inline CV edits
 

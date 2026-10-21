@@ -32,7 +32,7 @@ const Account = () => {
         const newPassword = String(formData.get('new-password') || '');
         const confirmPassword = String(formData.get('confirm-new-password') || '');
 
-        if (newPassword.length < 6) return setPasswordError('New password must be at least 6 characters');
+        if (newPassword.length < 8) return setPasswordError('New password must be at least 8 characters');
         if (newPassword !== confirmPassword) return setPasswordError('New passwords do not match');
         if (newPassword === currentPassword) return setPasswordError('New password must be different from the current one');
 
@@ -110,7 +110,7 @@ const Account = () => {
                             <div className="form-div">
                                 <label htmlFor="new-password">New password</label>
                                 <input type="password" name="new-password" id="new-password"
-                                       autoComplete="new-password" required minLength={6} maxLength={72} />
+                                       autoComplete="new-password" required minLength={8} maxLength={72} />
                             </div>
                             <div className="form-div">
                                 <label htmlFor="confirm-new-password">Confirm new password</label>

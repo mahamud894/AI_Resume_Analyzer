@@ -41,7 +41,7 @@ export default function AuthCard({ initialMode = "login", onClose }: { initialMo
         if (!isLogin) {
             if (!/^[a-zA-Z0-9_.]{3,30}$/.test(username))
                 return setFormError("Username must be 3-30 characters (letters, numbers, _ or .)");
-            if (password.length < 6) return setFormError("Password must be at least 6 characters");
+            if (password.length < 8) return setFormError("Password must be at least 8 characters");
             if (password !== confirmPassword) return setFormError("Passwords do not match");
             await register(username, email, password);
         } else {
@@ -93,7 +93,7 @@ export default function AuthCard({ initialMode = "login", onClose }: { initialMo
                     <label htmlFor="password" className={labelClass}>Password</label>
                     <input type="password" name="password" id="password" placeholder="••••••••"
                            autoComplete={isLogin ? "current-password" : "new-password"}
-                           required minLength={isLogin ? undefined : 6} className={inputClass} />
+                           required minLength={isLogin ? undefined : 8} className={inputClass} />
                 </div>
                 {!isLogin && (
                     <div>

@@ -10,7 +10,7 @@ import {
     uploadResume,
 } from "../controllers/resumeController.js";
 import { createCoverLetter, getCoverLetter, saveCoverLetterEdit } from "../controllers/coverLetterController.js";
-import { getImproved, improve, saveImprovedEdit } from "../controllers/improveController.js";
+import { getImproved, improve, saveImprovedEdit, scoreImproved } from "../controllers/improveController.js";
 import { requireAuth } from "../middleware/auth.js";
 import { uploadResumeFiles } from "../middleware/upload.js";
 import {
@@ -45,6 +45,7 @@ router.post("/analyze", aiLimiter, analyzeRules, analyze);
 router.post("/analysis/:analysisId/improve", aiLimiter, analysisIdParamRules, improve);
 router.get("/analysis/:analysisId/improved", analysisIdParamRules, getImproved);
 router.put("/analysis/:analysisId/improved", analysisIdParamRules, improvedEditRules, saveImprovedEdit);
+router.post("/analysis/:analysisId/improved/score", aiLimiter, analysisIdParamRules, scoreImproved);
 router.post("/analysis/:analysisId/cover-letter", aiLimiter, analysisIdParamRules, coverLetterRules, createCoverLetter);
 router.get("/analysis/:analysisId/cover-letter", analysisIdParamRules, getCoverLetter);
 router.put("/analysis/:analysisId/cover-letter", analysisIdParamRules, coverLetterEditRules, saveCoverLetterEdit);

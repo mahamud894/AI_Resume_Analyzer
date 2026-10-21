@@ -447,3 +447,47 @@ export async function improveResume(input) {
     });
     return postCheck(normalizeImprovement(raw), input.resumeText);
 }
+
+// ---------------------------------------------------------------------------
+// Plain-text version of a Europass CV, used to score the improved CV again
+// ("Before / After"). Placeholders like "[Add your phone]" are left out, so
+// the score reflects only what is really in the CV.
+// ---------------------------------------------------------------------------
+const PLACEHOLDER = /\[[^\]]*\]/g;
+const clean = (v) => s(v).replace(PLACEHOLDER, "").replace(/\s{2,}/g, " ").trim();
+const join = (parts, sep = " · ") => parts.map(clean).filter(Boolean).join(sep);
+
+export function europassCvToText(input) {
+    const cv = normalizeEuropassCv(input);
+    const p = cv.personalInfo;
+    const lines = [];
+    const section = (title, body) => {
+        const text = (Array.isArray(body) ? body : [body]).map((b) => (typeof b === "string" ? b : "")).filter(Boolean);
+        if (text.length) lines.push("", title.toUpperCase(), ...text);
+    };
+
+    lines.push(clean(p.fullName), join([p.email, p.phone, p.address, p.linkedin, p.github, p.website]));
+    section("About me", clean(cv.aboutMe));
+    section("Work experience", cv.workExperience.flatMap((w) => [
+        join([`${clean(w.startDate)} – ${clean(w.endDate)}`, w.jobTitle, w.employer, join([w.city, w.country], ", ")]),
+        ...w.responsibilities.map((r) => clean(r) && `- ${clean(r)}`),
+    ]));
+    section("Education and training", cv.education.map((e) => join([
+        `${clean(e.startDate)} – ${clean(e.endDate)}`, e.qualification, e.institution,
+        join([e.city, e.country], ", "), e.fieldOfStudy, e.grade, e.eqfLevel && `EQF level ${clean(e.eqfLevel)}`,
+    ])));
+    section("Language skills", [
+        cv.languageSkills.motherTongue.length ? `Mother tongue: ${join(cv.languageSkills.motherTongue, ", ")}` : "",
+        ...cv.languageSkills.otherLanguages.map((l) => join([
+            l.language, ...CEFR_FIELDS.map((f) => clean(l[f]) && `${f}: ${clean(l[f])}`),
+        ], ", ")),
+    ]);
+    section("Digital skills", cv.digitalSkills.map((d) => clean(d) && `- ${clean(d)}`));
+    section("Projects", cv.projects.map((pr) => join([pr.name, pr.description, pr.technologies.join(", "), pr.link], " — ")));
+    section("Certifications", cv.certifications.map((c) => join([c.name, c.issuer, c.date], ", ")));
+    section("Communication skills", clean(cv.communicationSkills));
+    section("Organisational skills", clean(cv.organisationalSkills));
+    section("Volunteering", cv.volunteering.map((v) => clean(v) && `- ${clean(v)}`));
+
+    return lines.filter((l, i, all) => l !== "" || all[i - 1] !== "").join("\n").trim();
+}

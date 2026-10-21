@@ -12,7 +12,7 @@ import ApiError from "../utils/ApiError.js";
 const populateAnalyses = {
     path: "analyses",
     options: { sort: { createdAt: -1 } },
-    populate: { path: "improved", select: "analysisId createdAt" },
+    populate: { path: "improved", select: "analysisId createdAt afterFeedback scoredAt" },
 };
 
 // Finds a resume that belongs to the logged-in user, or throws 404.

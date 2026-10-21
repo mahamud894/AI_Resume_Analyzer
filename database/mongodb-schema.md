@@ -159,6 +159,8 @@ based on the analysis feedback and the job description.
 | `editedCv`   | Object   | no       | The user's **saved inline edits** (same shape), or `null` = show the AI version. Set by `PUT …/improved`; cleared by "Reset to AI version" and by regenerating |
 | `editedAt`   | Date     | no       | Time of the last saved edit (`null` if not edited)                      |
 | `changes`    | Array    | no       | Improvement report, see below                                           |
+| `afterFeedback` | Object | no     | "Before / After": the improved CV scored again for the same job (same shape as `analyses.feedback`); `null` until scored, reset on regenerate |
+| `scoredAt`   | Date     | no       | Time of that score (`null` if not scored)                                |
 | `createdAt`  | Date     | auto     | Time of the latest (re)generation                                       |
 
 The CV shown, printed and used for the cover letter is `editedCv ?? europassCv` (model method `currentCv()`).

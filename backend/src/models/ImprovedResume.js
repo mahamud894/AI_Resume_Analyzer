@@ -32,6 +32,10 @@ const improvedResumeSchema = new mongoose.Schema(
         editedCv: { type: mongoose.Schema.Types.Mixed, default: null },
         editedAt: { type: Date, default: null },
         changes: { type: [changeSchema], default: [] },
+        // "Before / After": the improved CV scored again against the same job (same shape as
+        // Analysis.feedback). null until the user asks for it; a regenerated CV starts unscored.
+        afterFeedback: { type: mongoose.Schema.Types.Mixed, default: null },
+        scoredAt: { type: Date, default: null },
     },
     {
         timestamps: { createdAt: true, updatedAt: false },

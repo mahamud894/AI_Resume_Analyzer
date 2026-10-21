@@ -96,6 +96,8 @@ CREATE TABLE improved_resumes (
     europass_cv  JSON       NOT NULL,                 -- AI version: {personalInfo, aboutMe, workExperience[], education[ {…, eqfLevel} ], languageSkills, ...}
     edited_cv    JSON       NULL,                     -- the user's saved inline edits (same shape); NULL = use europass_cv
     edited_at    TIMESTAMP  NULL,                     -- time of the last saved edit
+    after_feedback JSON     NULL,                     -- "Before / After": the improved CV scored for the same job (same shape as analyses.feedback); NULL = not scored yet
+    scored_at    TIMESTAMP  NULL,                     -- time of that score
     created_at   TIMESTAMP  NOT NULL DEFAULT CURRENT_TIMESTAMP,   -- time of the latest (re)generation
 
     CONSTRAINT pk_improved_resumes          PRIMARY KEY (id),

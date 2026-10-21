@@ -24,8 +24,8 @@ export const registerRules = [
     body("email").trim().isEmail().withMessage("A valid email is required").toLowerCase(),
     body("password")
         .isString()
-        .isLength({ min: 6, max: 72 })
-        .withMessage("Password must be 6-72 characters"),
+        .isLength({ min: 8, max: 72 })
+        .withMessage("Password must be 8-72 characters"),
     validate,
 ];
 
@@ -40,8 +40,8 @@ export const changePasswordRules = [
     body("currentPassword").optional().isString().withMessage("Current password must be text"),
     body("newPassword")
         .isString()
-        .isLength({ min: 6, max: 72 })
-        .withMessage("New password must be 6-72 characters"),
+        .isLength({ min: 8, max: 72 })
+        .withMessage("New password must be 8-72 characters"),
     validate,
 ];
 
