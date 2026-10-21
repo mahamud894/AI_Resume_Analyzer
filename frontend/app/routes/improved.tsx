@@ -2,6 +2,9 @@ import {Link, useParams} from "react-router";
 import {useCallback, useEffect, useRef, useState} from "react";
 import EuropassCv from "~/components/EuropassCv";
 import ImprovementReport from "~/components/ImprovementReport";
+import BeforeAfter from "~/components/BeforeAfter";
+import {PageTitle, TopBar} from "~/components/PageChrome";
+import ProgressSteps from "~/components/ProgressSteps";
 import {ApiError, resumeApi} from "~/lib/api";
 import {collectCvEdits, currentCv} from "~/lib/europass";
 import {useRequireAuth} from "~/lib/hooks";
@@ -85,6 +88,24 @@ const Improved = () => {
         window.print();
     };
 
+    // ---------- Before / After score ----------
+    const [isScoring, setIsScoring] = useState(false);
+    const handleScore = async () => {
+        if (!analysisId || isScoring) return;
+        if (isDirty && !confirm('You have unsaved edits. Score the last saved version?')) return;
+        setIsScoring(true);
+        setError('');
+        try {
+            const { improved } = await resumeApi.scoreImproved(analysisId);
+            setImproved(improved);
+        } catch (err) {
+            setError(errorMessage(err));
+        } finally {
+            setIsScoring(false);
+        }
+    };
+    const editedAfterScore = Boolean(improved?.scoredAt && improved.editedAt && improved.editedAt > improved.scoredAt);
+
     // ---------- Inline edits ----------
     const cvRef = useRef<HTMLDivElement>(null);
     const [isDirty, setIsDirty] = useState(false);
@@ -144,15 +165,11 @@ const Improved = () => {
     };
 
     return (
-        <main className="!pt-0 bg-[url('/images/bg-small.svg')] bg-cover bg-center bg-fixed min-h-screen print-area">
-            <nav className="resume-nav bg-white no-print">
-                <Link to={`/resume/${id}?analysis=${analysisId}`} className="back-button">
-                    <img src="/icons/back.svg" alt="back" className="w-2.5 h-2.5" />
-                    <span className="text-gray-800 text-sm font-semibold">Back to Review</span>
-                </Link>
+        <main className="page-bg-long !pt-4 print-area">
+            <TopBar back={{ to: `/resume/${id}?analysis=${analysisId}`, label: 'Review' }}>
                 {/* Tablet/desktop actions; on phones they move to the bottom toolbar */}
                 {improved && !isGenerating && (
-                    <div className="hidden md:flex flex-row gap-3 flex-wrap justify-end">
+                    <>
                         <Link to={coverLetterUrl}
                               className="secondary-button border-[#0b4ea2] text-[#0b4ea2] font-medium hover:bg-blue-50">
                             {improved.coverLetter ? 'View Cover Letter' : 'Generate Cover Letter'}
@@ -160,29 +177,31 @@ const Improved = () => {
                         <button type="button" onClick={handleRegenerate} className="secondary-button">
                             Regenerate
                         </button>
-                        <button type="button" onClick={handleDownload} className="primary-button w-fit">
+                        <button type="button" onClick={handleDownload} className="primary-button btn-shine w-fit">
                             Download PDF
                         </button>
-                    </div>
+                    </>
                 )}
-            </nav>
+            </TopBar>
 
             <div className="flex flex-col gap-6 sm:gap-8 px-4 sm:px-6 lg:px-8 py-6 sm:py-8 max-w-[1500px] mx-auto print-area">
-                <div className="flex flex-col gap-2 no-print">
-                    <h2 className="text-3xl sm:text-4xl !text-black font-bold">Improved Resume (Europass)</h2>
-                    {analysis && (
-                        <p className="text-gray-500 break-words">
+                <PageTitle
+                    eyebrow="Improved resume"
+                    title="Improved Resume"
+                    subtitle={analysis && (
+                        <>
                             Tailored for {[analysis.jobTitle, analysis.companyName].filter(Boolean).join(' at ')}
                             {improved && ` · generated ${new Date(improved.createdAt).toLocaleString()}`}
-                        </p>
+                        </>
                     )}
+                >
                     {improved && !isGenerating && (
                         <Link to={coverLetterUrl}
                               className="md:hidden mt-2 secondary-button w-full border-[#0b4ea2] text-[#0b4ea2] font-medium hover:bg-blue-50">
                             {improved.coverLetter ? 'View Cover Letter' : 'Generate Cover Letter'}
                         </Link>
                     )}
-                </div>
+                </PageTitle>
 
                 {notice && (
                     <p className="no-print toast" role="status">
@@ -202,14 +221,27 @@ const Improved = () => {
                 )}
 
                 {isGenerating ? (
-                    <div className="no-print flex flex-col items-center gap-4 text-center">
-                        <h2 className="text-xl sm:text-2xl text-dark-200" role="status">Rewriting your resume in Europass format... (this can take up to a minute)</h2>
-                        <img src="/images/resume-scan.gif" alt="" className="w-full max-w-xs sm:max-w-xl lg:max-w-3xl" />
-                    </div>
+                    <ProgressSteps title="Rewriting your resume in Europass format" steps={[
+                        { label: 'Reading your resume and feedback', after: 0 },
+                        { label: 'Rewriting every section in Europass format', detail: 'Usually 30–60 seconds', after: 4 },
+                        { label: 'Checking facts, dates and placeholders', after: 40 },
+                        { label: 'Done' },
+                    ]} />
                 ) : improved ? (
                     <div className="flex flex-row max-xl:flex-col gap-8 items-start print-area">
-                        <section className="flex flex-col gap-4 w-[40%] max-xl:w-full no-print">
-                            <h3 className="text-xl sm:text-2xl font-bold text-black">What we improved</h3>
+                        <div className="flex flex-col gap-6 w-[40%] max-xl:w-full no-print">
+                        {analysis && (isScoring && !improved.afterFeedback ? (
+                            <ProgressSteps title="Scoring your improved CV" steps={[
+                                { label: 'Reading your improved CV', after: 0 },
+                                { label: 'Scoring it for the same job', detail: 'Usually 15–30 seconds', after: 3 },
+                                { label: 'Done' },
+                            ]} />
+                        ) : (
+                            <BeforeAfter before={analysis.feedback} after={improved.afterFeedback} scoredAt={improved.scoredAt}
+                                         editedAfterScore={editedAfterScore} isScoring={isScoring} onScore={handleScore} />
+                        ))}
+                        <section className="flex flex-col gap-4 bg-white rounded-3xl p-5 sm:p-7 shadow-sm ring-1 ring-black/[0.03]">
+                            <h3 className="text-xl sm:text-2xl font-semibold text-gray-900">What we improved</h3>
                             <p className="text-gray-500">
                                 Every change below is based on your analysis feedback and the job description.
                                 Nothing was invented — anything we could not find in your resume is marked as a
@@ -217,11 +249,12 @@ const Improved = () => {
                             </p>
                             <ImprovementReport changes={improved.changes} />
                         </section>
+                        </div>
 
                         <section className="flex flex-col gap-3 flex-1 min-w-0 w-full print-area">
                             <div className="no-print flex flex-row gap-3 justify-between items-end flex-wrap">
                                 <div className="flex flex-col gap-1">
-                                    <h3 className="text-xl sm:text-2xl font-bold text-black">
+                                    <h3 className="text-xl sm:text-2xl font-semibold text-gray-900">
                                         Your Europass CV
                                         {improved.editedCv && <span className="ml-2 align-middle text-xs font-medium rounded-full px-2 py-0.5 bg-badge-green text-badge-green-text">edited by you</span>}
                                     </h3>
@@ -256,7 +289,9 @@ const Improved = () => {
                         </section>
                     </div>
                 ) : !error && (
-                    <img src="/images/resume-scan-2.gif" alt="Loading" className="w-[160px] sm:w-[200px] mx-auto no-print" />
+                    <div className="no-print flex justify-center py-10">
+                        <span className="size-10 rounded-full border-4 border-[#e6e9ff] border-t-[#606beb] animate-spin" aria-label="Loading" />
+                    </div>
                 )}
             </div>
 

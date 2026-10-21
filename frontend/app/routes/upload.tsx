@@ -6,6 +6,8 @@ import {useNavigate} from "react-router";
 import {convertPdfToImage} from "~/lib/pdf2img";
 import {resumeApi} from "~/lib/api";
 import {useRequireAuth} from "~/lib/hooks";
+import {Card} from "~/components/PageChrome";
+import ProgressSteps from "~/components/ProgressSteps";
 
 export const meta = () => ([
     { title: 'Resumind | Upload' },
@@ -16,7 +18,8 @@ const Upload = () => {
     useRequireAuth();
     const navigate = useNavigate();
     const [isProcessing, setIsProcessing] = useState(false);
-    const [statusText, setStatusText] = useState('');
+    // Index of the running step in ANALYSIS_STEPS (shown instead of the form while processing)
+    const [phase, setPhase] = useState(0);
     const [error, setError] = useState('');
     const [file, setFile] = useState<File | null>(null);
 
@@ -30,18 +33,18 @@ const Upload = () => {
 
         try {
             // The preview image is only for display — if it fails we still upload the PDF
-            setStatusText('Converting to image...');
+            setPhase(0);
             const imageFile = await convertPdfToImage(file);
             if (!imageFile.file) console.warn(imageFile.error);
 
-            setStatusText('Uploading the file...');
+            setPhase(1);
             const { resume } = await resumeApi.upload(file, imageFile.file);
             resumeId = resume.id;
 
-            setStatusText('Analyzing... (this can take up to 30 seconds)');
+            setPhase(2);
             await resumeApi.analyze({ resumeId, ...job });
 
-            setStatusText('Analysis complete, redirecting...');
+            setPhase(3);
             navigate(`/resume/${resumeId}`);
         } catch (err) {
             // Don't keep a half-finished upload in the user's history
@@ -62,43 +65,84 @@ const Upload = () => {
     }
 
     return (
-        <main className="bg-[url('/images/bg-main.svg')] bg-cover">
+        <main className="page-bg-long">
             <Navbar />
 
             <section className="main-section">
-                <div className="page-heading py-6 sm:py-12 lg:py-16">
-                    <h1>Smart feedback for your dream job</h1>
-                    {isProcessing ? (
-                        <>
-                            <h2 role="status">{statusText}</h2>
-                            <img src="/images/resume-scan.gif" alt="Analyzing your resume" className="w-full max-w-xs sm:max-w-xl lg:max-w-3xl" />
-                        </>
-                    ) : (
-                        <h2>Drop your resume for an ATS score and improvement tips</h2>
-                    )}
-                    {!isProcessing && (
-                        <form id="upload-form" onSubmit={handleSubmit} className="flex flex-col gap-4 sm:gap-5 mt-2 sm:mt-8 text-left">
-                            <JobFields />
-
-                            <div className="form-div">
-                                <label htmlFor="uploader">Upload Resume</label>
-                                <FileUploader file={file} onFileSelect={handleFileSelect} />
-                            </div>
-
-                            {error && (
-                                <p className="w-full rounded-2xl bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-left" role="alert">
-                                    {error}
-                                </p>
-                            )}
-
-                            <button className="primary-button text-lg font-semibold py-3" type="submit">
-                                Analyze Resume
-                            </button>
-                        </form>
-                    )}
+                <div className="page-heading py-4 sm:py-10">
+                    <span className="text-sm font-semibold uppercase tracking-widest text-[#606beb]">New analysis</span>
+                    <h1 className="text-balance">Smart feedback for your dream job</h1>
+                    <h2>{isProcessing
+                        ? 'Hang tight — your report is on its way'
+                        : 'Add the job, drop your resume, and get an ATS score with clear tips'}</h2>
                 </div>
+
+                {isProcessing ? (
+                    <ProgressSteps title="Analyzing your resume" current={phase} steps={ANALYSIS_STEPS} />
+                ) : (
+                    <form id="upload-form" onSubmit={handleSubmit}
+                          className="!grid grid-cols-1 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] !gap-6 w-full max-w-6xl !items-start text-left">
+                        <Card className="flex flex-col gap-5">
+                            <StepHeading number={1} title="The job" text="The AI compares your resume with this job." />
+                            <JobFields />
+                        </Card>
+
+                        <div className="flex flex-col gap-6 lg:sticky lg:top-28">
+                            <Card className="flex flex-col gap-5">
+                                <StepHeading number={2} title="Your resume" text="A text-based PDF works best." />
+                                <div className="form-div">
+                                    <label htmlFor="uploader" className="sr-only">Upload Resume</label>
+                                    <FileUploader file={file} onFileSelect={handleFileSelect} />
+                                </div>
+
+                                {error && (
+                                    <p className="w-full rounded-2xl bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-left" role="alert">
+                                        {error}
+                                    </p>
+                                )}
+
+                                <button className="primary-button btn-shine text-lg font-semibold !min-h-12" type="submit">
+                                    Analyze Resume
+                                </button>
+                            </Card>
+
+                            <Card className="flex flex-col gap-3 !bg-[#f7f8ff]">
+                                <p className="font-semibold text-gray-900">What you will get</p>
+                                <ul className="flex flex-col gap-2 text-sm text-dark-200">
+                                    {['Overall and ATS score out of 100', 'Tips for tone, content, structure and skills',
+                                      'A Europass CV and cover letter in one click', 'A PDF report you can download'].map((item) => (
+                                        <li key={item} className="flex items-start gap-2">
+                                            <span className="mt-0.5 size-5 shrink-0 rounded-full bg-badge-green text-green-700 text-xs flex items-center justify-center">✓</span>
+                                            {item}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </Card>
+                        </div>
+                    </form>
+                )}
             </section>
         </main>
     )
 }
+
+const ANALYSIS_STEPS = [
+    { label: 'Reading your PDF', detail: 'Making a preview of the first page' },
+    { label: 'Uploading securely', detail: 'Only you can open your files' },
+    { label: 'AI is analyzing', detail: 'ATS, tone & style, content, structure and skills · usually 15–30 seconds' },
+    { label: 'Done — opening your report' },
+];
+
+function StepHeading({ number, title, text }: { number: number; title: string; text: string }) {
+    return (
+        <div className="flex items-center gap-3">
+            <span className="primary-gradient size-10 shrink-0 rounded-xl flex items-center justify-center text-white font-semibold">{number}</span>
+            <div>
+                <p className="text-lg font-semibold text-gray-900">{title}</p>
+                <p className="text-sm text-dark-200">{text}</p>
+            </div>
+        </div>
+    );
+}
+
 export default Upload

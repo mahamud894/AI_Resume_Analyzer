@@ -135,8 +135,8 @@ export default function Landing() {
     // A saved login is still being checked: show the loader instead of flashing the landing page
     if (isLoading && tokenStorage.get()) {
         return (
-            <main className="bg-[url('/images/bg-main.svg')] bg-cover flex items-center justify-center">
-                <img src="/images/resume-scan-2.gif" alt="Loading" className="w-[200px]" />
+            <main className="page-bg-long flex items-center justify-center">
+                <span className="size-10 rounded-full border-4 border-[#e6e9ff] border-t-[#606beb] animate-spin" role="status" aria-label="Loading" />
             </main>
         );
     }

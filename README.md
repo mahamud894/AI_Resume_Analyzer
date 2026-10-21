@@ -1,5 +1,7 @@
 # AI-Powered Resume Analyzer and Career Copilot
 
+[![CI](https://github.com/mahamud894/AI_Resume_Analyzer/actions/workflows/ci.yml/badge.svg)](https://github.com/mahamud894/AI_Resume_Analyzer/actions/workflows/ci.yml)
+
 A full-stack AI Resume Analyzer. Candidates create an account, upload their resume as a PDF, enter the
 company, job title and job description, and receive an AI-generated evaluation: an overall score,
 an ATS (Applicant Tracking System) score and detailed tips on tone & style, content, structure and skills.
@@ -99,7 +101,8 @@ AI-Resume-Analyzer/
 ├── frontend/                   # React web application
 │   ├── app/
 │   │   ├── components/         # Navbar, FileUploader, ResumeCard, Summary, ATS, Details, Score*,
-│   │   │                       # EuropassCv, ImprovementReport, CoverLetterSheet …
+│   │   │                       # EuropassCv, ImprovementReport, CoverLetterSheet, LandingSections, AuthCard,
+│   │                       # PageChrome, ProgressSteps, BeforeAfter, ScoreHistoryChart, ReportPrint …
 │   │   ├── lib/
 │   │   │   ├── api.ts          # The single API client (fetch + JWT, base URL from VITE_API_URL)
 │   │   │   ├── auth.ts         # Zustand auth store (login, register, logout, session restore)
@@ -107,7 +110,7 @@ AI-Resume-Analyzer/
 │   │   │   ├── pdf2img.ts      # Renders PDF page 1 to PNG in the browser (worker loaded from pdfjs-dist)
 │   │   │   ├── coverLetter.ts  # Letter → plain text (Copy / Edit), word count
 │   │   │   └── utils.ts
-│   │   ├── routes/             # home, auth, upload, resume/:id, resume/:id/improved/:analysisId,
+│   │   ├── routes/             # landing (/), dashboard (home), auth, upload, resume/:id, resume/:id/improved/:analysisId,
 │   │   │                       # resume/:id/improved/:analysisId/cover-letter, wipe
 │   │   ├── constants.ts        # API_BASE_URL, MAX_FILE_SIZE, ROUTES …
 │   │   ├── root.tsx
@@ -140,7 +143,8 @@ AI-Resume-Analyzer/
 │   ├── seed.js                 # Demo user + resume + analysis + improved resume + cover letter (npm run seed)
 │   └── sample-data.json        # Example documents
 ├── documentation/              # Submitted academic reports (proposal, SRS, design, progress)
-├── screenshots/                # UI screenshots
+├── screenshots/                # UI screenshots (desktop, tablet, mobile) + sample-report.pdf
+├── .github/workflows/ci.yml    # CI: backend tests + frontend type check & build on every push
 ├── docker-compose.yml          # Frontend + backend containers (docker compose up --build)
 ├── render.yaml                 # Render Blueprint for the backend API
 ├── .gitignore
@@ -161,7 +165,15 @@ AI-Resume-Analyzer/
 - **AI feedback** in a fixed structure: overall score, ATS score + tips, Tone & Style, Content, Structure and Skills,
   each with a score and explained "good" / "improve" tips.
 - **History dashboard**: every resume with its latest score and preview image, and a **Delete** button on each card.
+- **Landing page** (`/`) with how it works, features and the team; logged-in users go straight to their dashboard,
+  and logging out returns to the landing page. Scroll and hover effects (off for "reduce motion" users).
+- **Step-by-step progress** while the AI works (e.g. Reading your PDF → Uploading securely → AI is analyzing → Done),
+  with a note when the free server is waking up.
 - **Review page**: resume preview (click to open the original PDF) next to the full feedback.
+- **Score history chart**: every analysis of a resume (oldest → newest) and the score of the improved CV for the same
+  job, with hover details and a table view.
+- **Download Report (PDF)**: a printable A4 report with the score overview and every tip
+  (example: [`screenshots/sample-report.pdf`](screenshots/sample-report.pdf)).
 - **Analyze for another job**: run the same resume against a new job description without uploading it again.
   A dropdown switches between all jobs the resume was analyzed for (the choice is kept in the URL, `?analysis=<id>`).
 - **Improve My Resume (Europass)**: after an analysis, one click rewrites the resume in the official
@@ -179,6 +191,8 @@ AI-Resume-Analyzer/
   - **Edit in place and save**: click any text in the CV, then **Save changes** (stored in the database).
     **Reset to AI version** brings back the original. The cover letter uses your edited CV.
   - **Download PDF** (A4, print-optimised) and **Regenerate**. The review page then shows "View Improved Resume".
+  - **Before / After score**: one click scores the improved CV (placeholders removed) for the same job and shows
+    the old and new score side by side, with the change per category.
 - **Generate Cover Letter**: from the improved resume, one click writes a matching cover letter. This implements
   `cover_letter_text` from our Week 03/04 ERD (`CAREER_COPILOT_ASSESSMENT`).
   - **Optional form**: hiring manager name, company address, where you found the job, **Formal / Modern** tone.
@@ -192,10 +206,11 @@ AI-Resume-Analyzer/
   your other devices) and **delete account** (removes the account and all of its data and files; asks for the password).
 - **Wipe page** (`/wipe`): delete all of your resumes, analyses, improved resumes, cover letters and files.
 - **Logout** from the navbar.
+- **Branded 404 page** for unknown links.
 
 ### Validation & security
 
-- Frontend: required fields, password confirmation, PDF-only dropzone with size limit, clear error messages.
+- Frontend: required fields, password of at least 8 characters + confirmation, PDF-only dropzone with size limit, clear error messages.
 - Backend: `express-validator` on every input, PDF magic-byte check, Multer size limit, JWT auth middleware,
   per-user ownership checks, CORS restricted to the frontend URL, helmet headers, login rate limiting,
   AI rate limiting (15 Gemini requests per user per hour), central error handler. Secrets live only in `.env` files, which are git-ignored.
@@ -310,6 +325,11 @@ and uses your Atlas database. For a deployed API, change `VITE_API_URL` and `CLI
 ```bash
 cd backend && npm test        # API tests with an in-memory MongoDB and a mocked Gemini (no .env or quota needed)
 ```
+
+Covered: auth (incl. 8-character passwords), Google sign-in, upload/analyze/delete, Europass CV (generate, edit,
+reset, privacy), Before / After score and cover letter (generate, salutation/sign-off, edits, privacy).
+**GitHub Actions** runs these tests plus the frontend type check and build on every push
+(see the CI badge at the top).
 
 ### 5) Deploy live (frontend on Vercel, backend on Render)
 

@@ -108,7 +108,7 @@ const CategoryContent = ({
 
 const Details = ({ feedback }: { feedback: Feedback }) => {
   return (
-      <div className="flex flex-col gap-4 w-full">
+      <div className="flex flex-col gap-4 w-full bg-white rounded-3xl shadow-sm ring-1 ring-black/[0.03] p-2 sm:p-4">
         <Accordion>
           <AccordionItem id="tone-style">
             <AccordionHeader itemId="tone-style">

@@ -108,6 +108,8 @@ export const resumeApi = {
     getImproved: (analysisId: string) =>
         request<{ improved: ImprovedResume }>(`/api/resume/analysis/${analysisId}/improved`),
     // Save inline CV edits; null = reset to the AI version
+    scoreImproved: (analysisId: string) =>
+        request<{ improved: ImprovedResume }>(`/api/resume/analysis/${analysisId}/improved/score`, { method: "POST" }),
     saveImproved: (analysisId: string, europassCv: EuropassCv | null) =>
         request<{ improved: ImprovedResume }>(`/api/resume/analysis/${analysisId}/improved`, { method: "PUT", json: { europassCv } }),
     // Cover letter

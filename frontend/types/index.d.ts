@@ -19,7 +19,7 @@ interface Analysis {
     feedback: Feedback;
     createdAt: string;
     // Present (not null) when a Europass version was generated from this analysis
-    improved?: { id: string; analysisId: string; createdAt: string } | null;
+    improved?: { id: string; analysisId: string; createdAt: string; afterFeedback?: Feedback | null; scoredAt?: string | null } | null;
 }
 
 // ---- "Improve My Resume" (Europass CV) ----
@@ -97,6 +97,9 @@ interface ImprovedResume {
     editedCv?: EuropassCv | null;    // the user's saved inline edits; null/undefined = use europassCv
     editedAt?: string | null;
     changes: ImprovementChange[];
+    // "Before / After": the improved CV scored again for the same job; null until scored
+    afterFeedback?: Feedback | null;
+    scoredAt?: string | null;
     createdAt: string;
     // Present when a cover letter was generated from this improved resume
     coverLetter?: { id: string; improvedResumeId: string; updatedAt: string } | null;

@@ -47,7 +47,7 @@ export default function Home() {
       </div>
       {loadingResumes && (
           <div className="flex flex-col items-center justify-center">
-            <img src="/images/resume-scan-2.gif" alt="Loading your resumes" className="w-[160px] sm:w-[200px]" />
+            <span className="size-10 rounded-full border-4 border-[#e6e9ff] border-t-[#606beb] animate-spin" role="status" aria-label="Loading your resumes" />
           </div>
       )}
 

@@ -1,6 +1,8 @@
 import {Link, useParams} from "react-router";
 import {type FormEvent, useEffect, useRef, useState} from "react";
 import CoverLetterSheet from "~/components/CoverLetterSheet";
+import {PageTitle, TopBar} from "~/components/PageChrome";
+import ProgressSteps from "~/components/ProgressSteps";
 import {ApiError, resumeApi} from "~/lib/api";
 import {countWords, letterToText} from "~/lib/coverLetter";
 import {useRequireAuth} from "~/lib/hooks";
@@ -132,32 +134,24 @@ const CoverLetterPage = () => {
     const showActions = coverLetter && !isEditing && !isGenerating;
 
     return (
-        <main className="!pt-0 bg-[url('/images/bg-small.svg')] bg-cover bg-center bg-fixed min-h-screen print-area">
-            <nav className="resume-nav bg-white no-print">
-                <Link to={`/resume/${id}/improved/${analysisId}`} className="back-button">
-                    <img src="/icons/back.svg" alt="back" className="w-2.5 h-2.5" />
-                    <span className="text-gray-800 text-sm font-semibold">Back to Improved Resume</span>
-                </Link>
+        <main className="page-bg-long !pt-4 print-area">
+            <TopBar back={{ to: `/resume/${id}/improved/${analysisId}`, label: 'Europass CV' }}>
                 {/* Tablet/desktop actions; on phones they move to the bottom toolbar */}
                 {showActions && (
-                    <div className="hidden md:flex flex-row gap-3 flex-wrap justify-end">
+                    <>
                         <button type="button" onClick={startEditing} className="secondary-button">Edit</button>
                         <button type="button" onClick={handleCopy} className="secondary-button">Copy text</button>
-                        <button type="button" onClick={handleDownload} className="primary-button w-fit">Download PDF</button>
-                    </div>
+                        <button type="button" onClick={handleDownload} className="primary-button btn-shine w-fit">Download PDF</button>
+                    </>
                 )}
-            </nav>
+            </TopBar>
 
             <div className="flex flex-col gap-6 sm:gap-8 px-4 sm:px-6 lg:px-8 py-6 sm:py-8 max-w-[1500px] mx-auto print-area">
-                <div className="flex flex-col gap-2 no-print">
-                    <h2 className="text-3xl sm:text-4xl !text-black font-bold">Cover Letter</h2>
-                    {analysis && (
-                        <p className="text-gray-500 break-words">
-                            For {[analysis.jobTitle, analysis.companyName].filter(Boolean).join(' at ')} · matches your
-                            improved Europass CV
-                        </p>
-                    )}
-                </div>
+                <PageTitle
+                    eyebrow="Cover letter"
+                    title="Your cover letter"
+                    subtitle={analysis && <>For {[analysis.jobTitle, analysis.companyName].filter(Boolean).join(' at ')} · matches your improved Europass CV</>}
+                />
 
                 {notice && (
                     <p className="no-print toast" role="status">
@@ -172,9 +166,11 @@ const CoverLetterPage = () => {
                 )}
 
                 {isLoading ? (
-                    <img src="/images/resume-scan-2.gif" alt="Loading" className="w-[160px] sm:w-[200px] mx-auto no-print" />
+                    <div className="no-print flex justify-center py-10">
+                        <span className="size-10 rounded-full border-4 border-[#e6e9ff] border-t-[#606beb] animate-spin" aria-label="Loading" />
+                    </div>
                 ) : needsImproved ? (
-                    <div className="no-print flex flex-col gap-4 items-start">
+                    <div className="no-print flex flex-col gap-4 items-start bg-white rounded-3xl p-5 sm:p-7 shadow-sm ring-1 ring-black/[0.03]">
                         <p className="text-dark-200">The cover letter is written from your improved Europass resume — generate that first.</p>
                         <Link to={`/resume/${id}/improved/${analysisId}`} className="primary-button sm:w-fit px-6">
                             Improve My Resume (Europass)
@@ -184,8 +180,8 @@ const CoverLetterPage = () => {
                     <div className={`flex ${coverLetter || isGenerating ? 'flex-col-reverse' : 'flex-col'} xl:flex-row gap-6 sm:gap-8 items-start print-area`}>
                         {/* ---------- Left (desktop) / below the letter (phone, tablet): form + "Why this letter works" ---------- */}
                         <aside className="flex flex-col gap-6 w-full xl:w-[400px] xl:shrink-0 no-print">
-                            <form onSubmit={handleGenerate} className="flex flex-col gap-4 bg-white rounded-2xl shadow-md p-4 sm:p-6">
-                                <h3 className="text-xl font-bold text-black">Letter details <span className="text-sm font-normal text-gray-500">(all optional)</span></h3>
+                            <form onSubmit={handleGenerate} className="flex flex-col gap-4 bg-white rounded-3xl shadow-sm ring-1 ring-black/[0.03] p-5 sm:p-7">
+                                <h3 className="text-xl font-semibold text-gray-900">Letter details <span className="text-sm font-normal text-gray-500">(all optional)</span></h3>
                                 <div className="form-div">
                                     <label htmlFor="hiring-manager">Hiring manager name</label>
                                     <input id="hiring-manager" maxLength={100} placeholder="e.g. Ms. Sarah Rahman"
@@ -220,8 +216,8 @@ const CoverLetterPage = () => {
                             </form>
 
                             {letter && !isGenerating && (
-                                <section className="flex flex-col gap-4 bg-white rounded-2xl shadow-md p-4 sm:p-6">
-                                    <h3 className="text-xl font-bold text-black">Why this letter works</h3>
+                                <section className="flex flex-col gap-4 bg-white rounded-3xl shadow-sm ring-1 ring-black/[0.03] p-5 sm:p-7">
+                                    <h3 className="text-xl font-semibold text-gray-900">Why this letter works</h3>
                                     <p className="text-sm text-dark-200">
                                         <b>{coverLetter?.editedText ? countWords(coverLetter.editedText) : letter.wordCount}</b>{' '}
                                         {coverLetter?.editedText ? 'words in your edited version (whole letter)' : 'words in the letter body'}
@@ -249,10 +245,12 @@ const CoverLetterPage = () => {
                         {/* ---------- Right: the letter ---------- */}
                         <section className="flex flex-col gap-3 flex-1 min-w-0 w-full print-area">
                             {isGenerating ? (
-                                <div className="no-print flex flex-col items-center gap-4 text-center">
-                                    <h2 className="text-xl sm:text-2xl text-dark-200" role="status">Writing your cover letter...</h2>
-                                    <img src="/images/resume-scan.gif" alt="" className="w-full max-w-xs sm:max-w-xl lg:max-w-3xl" />
-                                </div>
+                                <ProgressSteps title="Writing your cover letter" steps={[
+                                    { label: 'Reading your Europass CV and the job', after: 0 },
+                                    { label: 'Writing the letter', detail: 'Usually 20–40 seconds', after: 3 },
+                                    { label: 'Checking length and tone', after: 30 },
+                                    { label: 'Done' },
+                                ]} />
                             ) : isEditing ? (
                                 <div className="flex flex-col gap-3 no-print">
                                     <div className="flex flex-row gap-3 justify-between items-center flex-wrap">
@@ -292,7 +290,7 @@ const CoverLetterPage = () => {
                                     </div>
                                 </>
                             ) : (
-                                <div className="no-print flex flex-col items-center gap-3 text-center bg-white rounded-2xl p-6 sm:p-10">
+                                <div className="no-print flex flex-col items-center gap-3 text-center bg-white rounded-3xl shadow-sm ring-1 ring-black/[0.03] p-6 sm:p-10">
                                     <h3 className="text-2xl font-semibold text-black">No cover letter yet</h3>
                                     <p className="text-gray-500 max-w-md">
                                         Fill in the optional details <span className="xl:hidden">above</span><span className="hidden xl:inline">on the left</span> and click <b>Generate Cover Letter</b>.
