@@ -164,6 +164,18 @@
   }
 }
 
+/* Long pages (landing, dashboard): the full colours of bg-main.svg at the top, then a soft white
+   veil further down, so the stretched pink/blue shapes don't get too strong near the bottom */
+@utility page-bg-long {
+  background-image:
+    linear-gradient(to bottom, rgb(255 255 255 / 0) 0, rgb(255 255 255 / 0) 700px,
+                    rgb(255 255 255 / 0.6) 1500px, rgb(255 255 255 / 0.7) 100%),
+    url('/images/bg-main.svg');
+  background-size: 100% 100%, cover;
+  background-position: top, top;
+  background-repeat: no-repeat;
+}
+
 @utility bg-gradient {
   background: linear-gradient(to bottom, #f0f4ff 60%, #fa7185cc);
 }

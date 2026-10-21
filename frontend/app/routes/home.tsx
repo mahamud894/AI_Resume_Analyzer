@@ -29,7 +29,7 @@ export default function Home() {
         .finally(() => setLoadingResumes(false));
   }, [isAuthenticated]);
 
-  return <main className="bg-[url('/images/bg-main.svg')] bg-cover">
+  return <main className="page-bg-long">
     <Navbar />
 
     <section className="main-section">

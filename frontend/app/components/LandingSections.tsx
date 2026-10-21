@@ -134,12 +134,12 @@ const STEPS = [
 const cardHover =
     "transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_48px_-16px_rgba(96,107,235,0.35)] motion-reduce:transform-none";
 
-// Roles as written in our submitted course reports
+// Roles as in the README (section 2. Team Engineering Roster & Roles)
 const TEAM = [
-    { name: "Mahammad Hasan", role: "Team Leader · Frontend Architecture", id: "11220320828", img: "/images/team/mahamud.jpg" },
+    { name: "Mahammad Hasan", role: "Team Leader / Frontend Developer + UI/UX Designer", id: "11220320828", img: "/images/team/mahamud.jpg" },
     { name: "Shanawaz Sakib", role: "Core System Integration Engineer", id: "11220320916", img: "/images/team/sakib.jpg" },
     { name: "Ashikur Rahman Himel", role: "Database Storage & Quality Controller", id: "11220320833", img: "/images/team/himel.jpg" },
-    { name: "Rasel Ratul", role: "UI-UX & Tailwind Designer", id: "11220320827", img: "/images/team/ratul.jpg" },
+    { name: "Rasel Ratul", role: "Backend Developer", id: "11220320827", img: "/images/team/ratul.jpg" },
 ];
 
 const initials = (name: string) => name.split(" ").map((part) => part[0]).slice(0, 2).join("");

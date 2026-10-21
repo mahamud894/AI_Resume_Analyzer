@@ -141,7 +141,7 @@ export default function Landing() {
     }
 
     return (
-        <main className="bg-[url('/images/bg-main.svg')] bg-cover bg-top">
+        <main className="page-bg-long">
             <LandingNav onAuth={openAuth} />
             {authMode && <AuthModal mode={authMode} onClose={() => setAuthMode(null)} />}
 
