@@ -35,7 +35,7 @@ const Navbar = () => {
 
     return (
         <nav className="navbar" ref={navRef}>
-            <Link to="/" className="flex items-center min-h-11">
+            <Link to="/dashboard" className="flex items-center min-h-11">
                 <p className="text-2xl font-bold text-gradient">RESUMIND</p>
             </Link>
 

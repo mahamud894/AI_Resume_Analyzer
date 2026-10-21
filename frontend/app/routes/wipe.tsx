@@ -53,9 +53,9 @@ const WipeApp = () => {
 
     return (
         <main className="!pt-4 sm:!pt-10 px-4 sm:px-10 pb-10 flex flex-col gap-4 max-w-5xl mx-auto">
-            <Link to="/" className="back-button w-fit">
+            <Link to="/dashboard" className="back-button w-fit">
                 <img src="/icons/back.svg" alt="back" className="w-2.5 h-2.5" />
-                <span className="text-gray-800 text-sm font-semibold">Back to Homepage</span>
+                <span className="text-gray-800 text-sm font-semibold">Back to Dashboard</span>
             </Link>
             <p className="break-words">Authenticated as: <b>{user?.username}</b> <span className="break-all">({user?.email})</span></p>
             <p>Existing resumes: {resumes.length}</p>

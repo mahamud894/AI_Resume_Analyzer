@@ -15,12 +15,13 @@ const Auth = () => {
     const { isLoading, isAuthenticated, error, login, register, loginWithGoogle, clearError } = useAuthStore();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const [mode, setMode] = useState<Mode>('login');
+    // "/auth?mode=signup" (used by the landing page buttons) opens the sign-up form directly
+    const [mode, setMode] = useState<Mode>(searchParams.get('mode') === 'signup' ? 'signup' : 'login');
     const [formError, setFormError] = useState('');
 
     // Only allow redirects inside our own app (prevents "open redirect" to other sites)
-    const nextParam = searchParams.get('next') || '/';
-    const next = nextParam.startsWith('/') && !nextParam.startsWith('//') ? nextParam : '/';
+    const nextParam = searchParams.get('next') || '/dashboard';
+    const next = nextParam.startsWith('/') && !nextParam.startsWith('//') ? nextParam : '/dashboard';
 
     useEffect(() => {
         if (isAuthenticated) navigate(next, { replace: true });

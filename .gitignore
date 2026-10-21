@@ -13,6 +13,7 @@ node_modules/
 
 # Frontend build output (React Router)
 frontend/.react-router/
+.react-router/
 frontend/build/
 
 # Backend user uploads (resume PDFs and preview images)
