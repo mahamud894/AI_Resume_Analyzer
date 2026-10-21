@@ -9,6 +9,7 @@ import ScoreCircle from "~/components/ScoreCircle";
 import { tokenStorage } from "~/lib/api";
 import { useAuthStore } from "~/lib/auth";
 import InfoSections, { CallToAction, Footer } from "~/components/LandingSections";
+import ScrollEffects from "~/components/ScrollEffects";
 
 export const meta = () => [
     { title: "Resumind | AI Resume Analyzer" },
@@ -142,6 +143,7 @@ export default function Landing() {
 
     return (
         <main className="page-bg-long">
+            <ScrollEffects />
             <LandingNav onAuth={openAuth} />
             {authMode && <AuthModal mode={authMode} onClose={() => setAuthMode(null)} />}
 
@@ -155,7 +157,7 @@ export default function Landing() {
                     </h2>
                     <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                         <button type="button" onClick={() => openAuth("signup")}
-                                className="primary-button sm:w-fit px-8 text-lg font-semibold">
+                                className="primary-button btn-shine sm:w-fit px-8 text-lg font-semibold">
                             Analyze My Resume
                         </button>
                         <a href="#how-it-works" className="secondary-button px-8 text-lg">See How It Works</a>
@@ -164,7 +166,7 @@ export default function Landing() {
 
                 {/* Sample report: real result-page components with example numbers */}
                 <div className="w-full max-w-5xl mt-4 sm:mt-8 animate-in fade-in slide-in-from-bottom-6 duration-1000 motion-reduce:animate-none">
-                    <div className="gradient-border shadow-lg">
+                    <div className="gradient-border shadow-lg float-soft">
                         <div className="grid grid-cols-1 md:grid-cols-[2fr_3fr] gap-4 sm:gap-6 items-stretch">
                             <div className="relative bg-white rounded-2xl overflow-hidden max-md:hidden">
                                 <img src="/images/resume_01.png" alt="Example resume"
@@ -206,7 +208,7 @@ export default function Landing() {
                 text="It takes less than a minute. Upload a PDF and get your first report."
                 action={
                     <button type="button" onClick={() => openAuth("signup")}
-                            className="primary-button sm:w-fit px-10 text-lg font-semibold">
+                            className="primary-button btn-shine sm:w-fit px-10 text-lg font-semibold">
                         Analyze My Resume
                     </button>
                 }

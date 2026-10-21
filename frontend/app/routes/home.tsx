@@ -2,6 +2,7 @@ import type { Route } from "./+types/home";
 import Navbar from "~/components/Navbar";
 import ResumeCard from "~/components/ResumeCard";
 import InfoSections, {CallToAction, Footer} from "~/components/LandingSections";
+import ScrollEffects, {reveal} from "~/components/ScrollEffects";
 import {Link} from "react-router";
 import {useEffect, useState} from "react";
 import {resumeApi} from "~/lib/api";
@@ -30,6 +31,7 @@ export default function Home() {
   }, [isAuthenticated]);
 
   return <main className="page-bg-long">
+    <ScrollEffects />
     <Navbar />
 
     <section className="main-section">
@@ -51,16 +53,18 @@ export default function Home() {
 
       {!loadingResumes && resumes.length > 0 && (
         <div className="resumes-section">
-          {resumes.map((resume) => (
-              <ResumeCard key={resume.id} resume={resume}
-                          onDeleted={(id) => setResumes((list) => list.filter((r) => r.id !== id))} />
+          {resumes.map((resume, i) => (
+              <div key={resume.id} data-reveal style={reveal(i)} className="min-w-0">
+                <ResumeCard resume={resume}
+                            onDeleted={(id) => setResumes((list) => list.filter((r) => r.id !== id))} />
+              </div>
           ))}
         </div>
       )}
 
       {!loadingResumes && !error && resumes?.length === 0 && (
           <div className="flex flex-col items-center justify-center mt-4 sm:mt-10 gap-4 w-full">
-            <Link to="/upload" className="primary-button sm:w-fit text-xl font-semibold px-8">
+            <Link to="/upload" className="primary-button btn-shine sm:w-fit text-xl font-semibold px-8">
               Upload Resume
             </Link>
           </div>
@@ -73,7 +77,7 @@ export default function Home() {
         title="Applying for another job?"
         text="Upload your resume with the new job description and get a fresh score, Europass CV and cover letter."
         action={
-          <Link to="/upload" className="primary-button sm:w-fit px-10 text-lg font-semibold">
+          <Link to="/upload" className="primary-button btn-shine sm:w-fit px-10 text-lg font-semibold">
             Analyze a Resume
           </Link>
         }

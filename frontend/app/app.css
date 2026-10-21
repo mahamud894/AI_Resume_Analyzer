@@ -428,3 +428,60 @@
 @media (prefers-reduced-motion: reduce) {
   .auth-bg, .auth-blob { animation: none; }
 }
+
+/* ------------------------------------------------------------------ */
+/* Scroll effects (landing page + dashboard) — see ScrollEffects.tsx    */
+/* Only active once JS added .reveal-ready, never with reduced motion. */
+/* ------------------------------------------------------------------ */
+/* Hidden state applies instantly (no fade-out); only the way in is animated */
+.reveal-ready [data-reveal] {
+  opacity: 0;
+  transform: translateY(28px) scale(0.98);
+  transition: translate 0.3s ease, box-shadow 0.3s ease; /* keeps the cards' hover lift smooth */
+}
+.reveal-ready [data-reveal].is-visible {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) var(--reveal-delay, 0ms),
+    transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) var(--reveal-delay, 0ms),
+    translate 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Score bars and rings fill up when their card appears */
+.reveal-ready [data-reveal]:not(.is-visible) .bar-fill { width: 0 !important; }
+.reveal-ready [data-reveal]:not(.is-visible) .ring-fill { stroke-dashoffset: var(--ring-c) !important; }
+.reveal-ready [data-reveal].is-visible .bar-fill { transition: width 1.1s cubic-bezier(0.2, 0.7, 0.2, 1) calc(var(--reveal-delay, 0ms) + 0.3s); }
+.reveal-ready [data-reveal].is-visible .ring-fill { transition: stroke-dashoffset 1.3s cubic-bezier(0.2, 0.7, 0.2, 1) calc(var(--reveal-delay, 0ms) + 0.3s); }
+
+/* "How it works": the line joining the steps draws itself */
+.journey-line-x { transform-origin: left center; }
+.journey-line-y { transform-origin: center top; }
+.reveal-ready [data-reveal]:not(.is-visible) .journey-line-x { transform: scaleX(0); }
+.reveal-ready [data-reveal]:not(.is-visible) .journey-line-y { transform: scaleY(0); }
+.reveal-ready [data-reveal].is-visible .journey-line { transition: transform 1.4s cubic-bezier(0.2, 0.7, 0.2, 1) 0.2s; }
+
+/* Gentle floating (hero sample report) */
+@keyframes float-soft {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.float-soft { animation: float-soft 6s ease-in-out infinite; }
+
+/* Light sweep across a button on hover */
+.btn-shine { position: relative; overflow: hidden; isolation: isolate; }
+.btn-shine::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(110deg, transparent 30%, rgb(255 255 255 / 0.45) 50%, transparent 70%);
+  transform: translateX(-120%);
+  transition: transform 0.8s ease;
+}
+.btn-shine:hover::after { transform: translateX(120%); }
+
+@media (prefers-reduced-motion: reduce) {
+  .float-soft { animation: none; }
+  .btn-shine::after { transition: none; }
+}

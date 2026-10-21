@@ -1,7 +1,8 @@
 // Information sections shared by the landing page ("/") and the dashboard ("/dashboard"):
 // How it works, Features, Team, the closing call-to-action and the footer.
 // Change them here and both pages update.
-import { useId, useState, type ReactNode } from "react";
+import { useId, useState, type CSSProperties, type ReactNode } from "react";
+import { reveal } from "~/components/ScrollEffects";
 
 // Simple line icons, drawn in the app's primary colour
 const icon = (d: string, className = "size-6", stroke = "#606beb") => (
@@ -85,7 +86,8 @@ function MiniRing({ score, className = "size-16" }: { score: number; className?:
             </defs>
             <circle cx="28" cy="28" r={r} fill="none" stroke="#e5e7eb" strokeWidth="6" />
             <circle cx="28" cy="28" r={r} fill="none" stroke={`url(#${id})`} strokeWidth="6"
-                    strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - score / 100)} />
+                    strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - score / 100)}
+                    className="ring-fill" style={{ "--ring-c": c } as CSSProperties} />
         </svg>
     );
 }
@@ -147,7 +149,7 @@ const initials = (name: string) => name.split(" ").map((part) => part[0]).slice(
 function TeamPhoto({ name, img }: { name: string; img: string }) {
     const [failed, setFailed] = useState(false);
     return (
-        <div className="primary-gradient rounded-full p-1 shadow-md">
+        <div className="primary-gradient rounded-full p-1 shadow-md transition-transform duration-300 group-hover:scale-110 group-hover:shadow-[0_12px_28px_-8px_rgba(96,107,235,0.7)]">
             {failed ? (
                 <div className="size-20 sm:size-24 rounded-full bg-white flex items-center justify-center text-2xl font-semibold text-[#606beb]">
                     {initials(name)}
@@ -163,7 +165,7 @@ function TeamPhoto({ name, img }: { name: string; img: string }) {
 
 export function SectionHeading({ eyebrow, title, text }: { eyebrow: string; title: string; text?: string }) {
     return (
-        <div className="flex flex-col items-center gap-3 text-center max-w-2xl">
+        <div data-reveal className="flex flex-col items-center gap-3 text-center max-w-2xl">
             <span className="text-sm font-semibold uppercase tracking-widest text-[#606beb]">{eyebrow}</span>
             <h2 className="!text-3xl sm:!text-4xl font-semibold text-gradient !leading-tight pb-1 text-balance">{title}</h2>
             {text && <p className="text-dark-200 text-base sm:text-lg">{text}</p>}
@@ -176,14 +178,14 @@ export function HowItWorks() {
     return (
         <section id="how-it-works" className="main-section scroll-mt-28">
             <SectionHeading eyebrow="How it works" title="From resume to application in 4 steps" />
-            <ol className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6 w-full max-w-6xl">
+            <ol data-reveal className="!opacity-100 !transform-none relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6 w-full max-w-6xl">
                 {/* The journey line joining the step badges (behind the cards, visible in the gaps) */}
                 <span aria-hidden="true"
-                      className="hidden lg:block absolute left-[8%] right-[8%] top-[52px] h-[3px] rounded-full bg-gradient-to-r from-[#8e98ff] via-[#FF97AD] to-[#606beb]" />
+                      className="journey-line journey-line-x hidden lg:block absolute left-[8%] right-[8%] top-[52px] h-[3px] rounded-full bg-gradient-to-r from-[#8e98ff] via-[#FF97AD] to-[#606beb]" />
                 <span aria-hidden="true"
-                      className="sm:hidden absolute left-[51px] top-6 bottom-6 w-[3px] rounded-full bg-gradient-to-b from-[#8e98ff] via-[#FF97AD] to-[#606beb]" />
+                      className="journey-line journey-line-y sm:hidden absolute left-[51px] top-6 bottom-6 w-[3px] rounded-full bg-gradient-to-b from-[#8e98ff] via-[#FF97AD] to-[#606beb]" />
                 {STEPS.map((step, i) => (
-                    <li key={step.title}
+                    <li key={step.title} data-reveal style={reveal(i, 120)}
                         className={`group relative z-10 bg-white rounded-3xl p-6 shadow-sm ring-1 ring-black/[0.03] flex flex-col gap-4 overflow-hidden ${cardHover}`}>
                         {/* Big faded step number in the corner */}
                         <span aria-hidden="true"
@@ -209,11 +211,11 @@ export function HowItWorks() {
 }
 
 // Feature card shell: icon, title, text, then an optional visual
-function FeatureCard({ title, text, iconPath, className = "", dark = false, children }: {
-    title: string; text: string; iconPath: string; className?: string; dark?: boolean; children?: ReactNode;
+function FeatureCard({ title, text, iconPath, className = "", dark = false, index = 0, children }: {
+    title: string; text: string; iconPath: string; className?: string; dark?: boolean; index?: number; children?: ReactNode;
 }) {
     return (
-        <div className={`group relative overflow-hidden rounded-3xl p-6 sm:p-7 flex flex-col gap-5 shadow-sm ring-1 ${cardHover} ${
+        <div data-reveal style={reveal(index, 80)} className={`group relative overflow-hidden rounded-3xl p-6 sm:p-7 flex flex-col gap-5 shadow-sm ring-1 ${cardHover} ${
             dark ? "bg-gradient-to-br from-[#1e1b4b] via-[#312e81] to-[#4f46e5] ring-white/10 text-white"
                  : "bg-white ring-black/[0.03]"} ${className}`}>
             {/* soft colour glow in the corner, brighter on hover */}
@@ -252,7 +254,7 @@ export function Features() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 w-full max-w-6xl">
 
                 {/* ATS score — wide card with keyword check */}
-                <FeatureCard title="ATS score" iconPath={ICONS.ats} className="md:col-span-2"
+                <FeatureCard index={0} title="ATS score" iconPath={ICONS.ats} className="md:col-span-2"
                              text="See how Applicant Tracking Systems read your resume and which keywords from the job are missing.">
                     <div className="rounded-2xl bg-[#f7f8ff] ring-1 ring-[#e6ebff] p-4 flex flex-col gap-3">
                         <div className="flex items-center justify-between gap-3">
@@ -267,7 +269,7 @@ export function Features() {
                 </FeatureCard>
 
                 {/* Detailed feedback — tall card with the four category scores */}
-                <FeatureCard title="Detailed feedback" iconPath={ICONS.report} className="lg:row-span-2"
+                <FeatureCard index={1} title="Detailed feedback" iconPath={ICONS.report} className="lg:row-span-2"
                              text="Tone & style, content, structure and skills — each scored from 0 to 100 with explanations.">
                     <div className="flex flex-col gap-4">
                         <div className="flex items-center gap-4 rounded-2xl bg-[#f7f8ff] ring-1 ring-[#e6ebff] p-4">
@@ -288,7 +290,7 @@ export function Features() {
                                         <span className={`font-semibold ${scoreColor(score).text}`}>{score}</span>
                                     </div>
                                     <div className="h-2.5 rounded-full bg-gray-100 overflow-hidden">
-                                        <div className={`h-full rounded-full ${scoreColor(score).bar} transition-[width] duration-700`}
+                                        <div className={`h-full rounded-full ${scoreColor(score).bar} bar-fill`}
                                              style={{ width: `${score}%` }} />
                                     </div>
                                 </div>
@@ -306,7 +308,7 @@ export function Features() {
                 </FeatureCard>
 
                 {/* Europass CV — mini CV sheet */}
-                <FeatureCard title="Europass CV" iconPath={ICONS.cv}
+                <FeatureCard index={2} title="Europass CV" iconPath={ICONS.cv}
                              text="Rebuild your resume in the European Europass format, with a report of every improvement.">
                     <div className="rounded-xl bg-white ring-1 ring-gray-200 shadow-sm p-3 flex flex-col gap-2 rotate-[-1.5deg] transition-transform duration-300 group-hover:rotate-0">
                         <div className="flex items-center gap-2 border-b-2 border-[#0b4ea2] pb-2">
@@ -327,7 +329,7 @@ export function Features() {
                 </FeatureCard>
 
                 {/* Cover letter — mini letter + tone switch */}
-                <FeatureCard title="Cover letter" iconPath={ICONS.letter}
+                <FeatureCard index={3} title="Cover letter" iconPath={ICONS.letter}
                              text="A one-page letter matched to the job, in a formal or modern tone. Edit it and download.">
                     <div className="flex flex-col gap-3">
                         <div className="w-fit inline-flex gap-1 rounded-full bg-[#eef3fb] p-1 text-xs font-semibold">
@@ -344,7 +346,7 @@ export function Features() {
                 </FeatureCard>
 
                 {/* Application history — wide card with a mini dashboard list */}
-                <FeatureCard title="Application history" iconPath={ICONS.history} className="lg:col-span-2"
+                <FeatureCard index={4} title="Application history" iconPath={ICONS.history} className="lg:col-span-2"
                              text="Every analysis is saved in your dashboard, so you can track all your applications in one place.">
                     <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-1 lg:grid-cols-3 gap-3">
                         {history.map(([letter, company, role, score]) => (
@@ -363,7 +365,7 @@ export function Features() {
                 </FeatureCard>
 
                 {/* Private & secure — dark accent card */}
-                <FeatureCard title="Private & secure" iconPath={ICONS.lock} dark className="md:col-span-2 lg:col-span-1"
+                <FeatureCard index={5} title="Private & secure" iconPath={ICONS.lock} dark className="md:col-span-2 lg:col-span-1"
                              text="Your resumes and reports belong to you.">
                     <ul className="flex flex-col gap-2.5">
                         {["Passwords encrypted with bcrypt", "Secure login tokens (JWT)", "Files only you can open"].map((item) => (
@@ -387,8 +389,9 @@ export function Team() {
             <SectionHeading eyebrow="Our team" title="Meet Team T05"
                             text="CSE4204 Mobile Computing Lab · Section 8A · Northern University of Business and Technology, Khulna" />
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 w-full max-w-6xl">
-                {TEAM.map((member) => (
-                    <div key={member.id} className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm flex flex-col items-center text-center gap-3">
+                {TEAM.map((member, i) => (
+                    <div key={member.id} data-reveal style={reveal(i, 100)}
+                         className={`group bg-white rounded-2xl p-4 sm:p-6 shadow-sm flex flex-col items-center text-center gap-3 ${cardHover}`}>
                         <TeamPhoto name={member.name} img={member.img} />
                         <div className="flex flex-col gap-1">
                             <h3 className="text-base sm:text-lg font-semibold text-gray-900">{member.name}</h3>
@@ -407,7 +410,7 @@ export function Team() {
 export function CallToAction({ title, text, action }: { title: string; text: string; action: ReactNode }) {
     return (
         <section className="main-section">
-            <div className="gradient-border w-full max-w-4xl shadow-sm">
+            <div data-reveal className="gradient-border w-full max-w-4xl shadow-sm">
                 <div className="bg-white rounded-2xl px-6 py-10 sm:p-12 flex flex-col items-center gap-5 text-center">
                     <h2 className="!text-3xl sm:!text-4xl font-semibold text-gradient !leading-tight pb-1 text-balance">
                         {title}
