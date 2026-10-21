@@ -7,7 +7,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://your-backend-name.onrender.com/api/:path*"
+      "destination": "https://resumind-api-3kpd.onrender.com/api/:path*"
     },
     {
       "source": "/(.*)",

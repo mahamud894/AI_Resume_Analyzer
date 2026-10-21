@@ -1,8 +1,7 @@
 // app/constants.ts
 // App-wide constants shared by the frontend.
 
-// ⭐ এখানে আপনার Render থেকে পাওয়া আসল লিংকটি বসান ⭐
-export const API_BASE_URL = "https://ai-resume-analyzer-backend-xyz.onrender.com"; 
+export const API_BASE_URL = "https://resumind-api-3kpd.onrender.com";
 
 // OAuth Client ID for "Sign in with Google". Empty = the Google button is hidden (email login still works).
 export const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
