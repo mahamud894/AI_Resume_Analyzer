@@ -7,6 +7,10 @@ company, job title and job description, and receive an AI-generated evaluation: 
 an ATS (Applicant Tracking System) score and detailed tips on tone & style, content, structure and skills.
 Every analysis is stored, so users can track all their applications in one dashboard.
 
+**🌐 Live demo:** https://ai-resume-analyzer-psi-lime.vercel.app · **API:** https://resumind-api-3kpd.onrender.com/api/health
+
+**📄 Final documents (Weeks 11–14):** [documentation/](documentation/) — final report, user manual, API documentation, deployment sheet, presentation and viva guide.
+
 ![Resumind](frontend/public/readme/hero.webp)
 
 ---

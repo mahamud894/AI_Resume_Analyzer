@@ -144,7 +144,7 @@ the JWT returned by register/login. Tokens expire after 7 days.
 |------------|-------------------------------------------------------|
 | `username` | 3–30 chars, letters / numbers / `_` / `.`, unique     |
 | `email`    | valid email, unique (stored lowercase)                |
-| `password` | 6–72 chars (hashed with bcrypt, never stored in plain text) |
+| `password` | 8–72 chars (hashed with bcrypt, never stored in plain text) |
 
 ```json
 // Request
