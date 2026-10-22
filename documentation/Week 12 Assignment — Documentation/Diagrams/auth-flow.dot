@@ -1,0 +1,20 @@
+digraph Auth {
+  graph [fontname="Inter", bgcolor="white", pad=0.35, splines=spline, newrank=true];
+  node  [shape=plain, fontname="Inter", fontsize=13, fontcolor="#0F172A"];
+  edge  [fontname="Inter", fontsize=10, color="#64748B", fontcolor="#475569", penwidth=1.6, arrowsize=0.75];
+  graph [rankdir=TB, nodesep=0.55, ranksep=0.6];
+  a [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="7" color="#4F46E5" bgcolor="white"><tr><td bgcolor="#4F46E5" align="left"><font color="white" point-size="11"><b>1</b></font>  <font color="white"><b>Sign up / log in</b></font></td></tr><tr><td align="left" balign="left"><font color="#475569" point-size="11">email + password (8–72)</font></td></tr><tr><td align="left" balign="left"><font color="#475569" point-size="11">or Google ID token</font></td></tr></table>>];
+  b [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="7" color="#0F766E" bgcolor="white"><tr><td bgcolor="#0F766E" align="left"><font color="white" point-size="11"><b>2</b></font>  <font color="white"><b>Backend checks</b></font></td></tr><tr><td align="left" balign="left"><font color="#475569" point-size="11">validation · 20 req / 15 min</font></td></tr><tr><td align="left" balign="left"><font color="#475569" point-size="11">bcrypt compare / Google verify</font></td></tr></table>>];
+  c [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="7" color="#0F766E" bgcolor="white"><tr><td bgcolor="#0F766E" align="left"><font color="white" point-size="11"><b>3</b></font>  <font color="white"><b>JWT issued</b></font></td></tr><tr><td align="left" balign="left"><font color="#475569" point-size="11">signed with JWT_SECRET</font></td></tr><tr><td align="left" balign="left"><font color="#475569" point-size="11">valid 7 days</font></td></tr></table>>];
+  d [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="7" color="#4F46E5" bgcolor="white"><tr><td bgcolor="#4F46E5" align="left"><font color="white" point-size="11"><b>4</b></font>  <font color="white"><b>Browser stores</b></font></td></tr><tr><td align="left" balign="left"><font color="#475569" point-size="11">Zustand + localStorage</font></td></tr></table>>];
+  e [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="7" color="#4F46E5" bgcolor="white"><tr><td bgcolor="#4F46E5" align="left"><font color="white" point-size="11"><b>5</b></font>  <font color="white"><b>Every API call</b></font></td></tr><tr><td align="left" balign="left"><font color="#475569" point-size="11">Authorization: Bearer &lt;JWT&gt;</font></td></tr></table>>];
+  g [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="7" color="#0F766E" bgcolor="white"><tr><td bgcolor="#0F766E" align="left"><font color="white" point-size="11"><b>6</b></font>  <font color="white"><b>requireAuth</b></font></td></tr><tr><td align="left" balign="left"><font color="#475569" point-size="11">verify signature &amp; expiry</font></td></tr><tr><td align="left" balign="left"><font color="#475569" point-size="11">reject if older than</font></td></tr><tr><td align="left" balign="left"><font color="#475569" point-size="11">passwordChangedAt</font></td></tr></table>>];
+  h [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="7" color="#15803D" bgcolor="white"><tr><td bgcolor="#15803D" align="left"><font color="white" point-size="11"><b>7</b></font>  <font color="white"><b>Owner's data only</b></font></td></tr><tr><td align="left" balign="left"><font color="#475569" point-size="11">queries filtered by userId</font></td></tr><tr><td align="left" balign="left"><font color="#475569" point-size="11">others' ids → 404</font></td></tr></table>>];
+  {rank=same; a; b; c; d;}
+  {rank=same; h; g; e;}
+  a -> b -> c [color="#0F766E"];
+  c -> d [color="#4F46E5"];
+  d -> e [color="#4F46E5"];
+  h -> g [dir=back, color="#0F766E"];
+  g -> e [dir=back, color="#0F766E"];
+}

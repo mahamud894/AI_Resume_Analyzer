@@ -1,0 +1,37 @@
+digraph Architecture {
+  graph [fontname="Inter", bgcolor="white", pad=0.35, splines=spline, newrank=true];
+  node  [shape=plain, fontname="Inter", fontsize=13, fontcolor="#0F172A"];
+  edge  [fontname="Inter", fontsize=10, color="#64748B", fontcolor="#475569", penwidth=1.6, arrowsize=0.75];
+  graph [rankdir=TB, nodesep=0.5, ranksep=0.65];
+  user [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="7" color="#4F46E5" bgcolor="white"><tr><td bgcolor="#4F46E5" align="left"><font color="white"><b>User</b></font></td></tr><tr><td align="left" balign="left"><font color="#475569" point-size="11">Browser or phone</font></td></tr><tr><td align="left" balign="left"><font color="#475569" point-size="11">HTTPS</font></td></tr></table>>];
+  gh [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="7" color="#334155" bgcolor="white"><tr><td bgcolor="#334155" align="left"><font color="white"><b>GitHub</b></font></td></tr><tr><td align="left" balign="left"><font color="#475569" point-size="11">Push to main</font></td></tr><tr><td align="left" balign="left"><font color="#475569" point-size="11">CI: 48 tests + build</font></td></tr><tr><td align="left" balign="left"><font color="#475569" point-size="11">auto-deploy</font></td></tr></table>>];
+  subgraph cluster_fe { label=<<font color="#4F46E5"><b>1  Presentation tier — Vercel</b></font>>; labeljust=l; labelloc=b; fontsize=14; style="rounded,filled"; fillcolor="#EEF2FF"; color="#C7D2FE"; penwidth=1.4; margin=14;
+    spa [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="7" color="#4F46E5" bgcolor="white"><tr><td bgcolor="#4F46E5" align="left"><font color="white"><b>React 19 SPA</b></font></td></tr><tr><td align="left" balign="left"><font color="#475569" point-size="11">React Router 8 · Tailwind CSS 4</font></td></tr><tr><td align="left" balign="left"><font color="#475569" point-size="11">Zustand auth store</font></td></tr></table>>];
+    pdfjs [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="7" color="#4F46E5" bgcolor="white"><tr><td bgcolor="#4F46E5" align="left"><font color="white"><b>pdf.js</b></font></td></tr><tr><td align="left" balign="left"><font color="#475569" point-size="11">page-1 preview image</font></td></tr></table>>];
+    apic [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="7" color="#4F46E5" bgcolor="white"><tr><td bgcolor="#4F46E5" align="left"><font color="white"><b>API client</b></font></td></tr><tr><td align="left" balign="left"><font color="#475569" point-size="11">fetch + Bearer JWT</font></td></tr><tr><td align="left" balign="left"><font color="#475569" point-size="11">401 → log out</font></td></tr></table>>];
+    {rank=same; pdfjs; spa; apic;}
+  }
+  subgraph cluster_be { label=<<font color="#0F766E"><b>2  Application tier — Render</b></font>>; labeljust=l; labelloc=b; fontsize=14; style="rounded,filled"; fillcolor="#F0FDFA"; color="#99F6E4"; penwidth=1.4; margin=14;
+    mw [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="7" color="#0F766E" bgcolor="white"><tr><td bgcolor="#0F766E" align="left"><font color="white"><b>Middleware</b></font></td></tr><tr><td align="left" balign="left"><font color="#475569" point-size="11">helmet · CORS · rate limit</font></td></tr><tr><td align="left" balign="left"><font color="#475569" point-size="11">JWT auth · validation · Multer</font></td></tr></table>>];
+    ctrl [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="7" color="#0F766E" bgcolor="white"><tr><td bgcolor="#0F766E" align="left"><font color="white"><b>Controllers</b></font></td></tr><tr><td align="left" balign="left"><font color="#475569" point-size="11">auth · resume</font></td></tr><tr><td align="left" balign="left"><font color="#475569" point-size="11">improve · cover letter</font></td></tr></table>>];
+    svc [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="7" color="#0F766E" bgcolor="white"><tr><td bgcolor="#0F766E" align="left"><font color="white"><b>Services</b></font></td></tr><tr><td align="left" balign="left"><font color="#475569" point-size="11">pdf-parse · Gemini JSON mode</font></td></tr><tr><td align="left" balign="left"><font color="#475569" point-size="11">Europass post-check · GridFS</font></td></tr></table>>];
+    {rank=same; mw; ctrl; svc;}
+  }
+  subgraph cluster_data { label=<<font color="#15803D"><b>3  Data &amp; external services</b></font>>; labeljust=l; labelloc=b; fontsize=14; style="rounded,filled"; fillcolor="#F0FDF4"; color="#BBF7D0"; penwidth=1.4; margin=14;
+    db [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="7" color="#15803D" bgcolor="white"><tr><td bgcolor="#15803D" align="left"><font color="white"><b>MongoDB Atlas</b></font></td></tr><tr><td align="left" balign="left"><font color="#475569" point-size="11">5 collections</font></td></tr><tr><td align="left" balign="left"><font color="#475569" point-size="11">GridFS: PDFs + previews</font></td></tr></table>>];
+    gem [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="7" color="#BE185D" bgcolor="white"><tr><td bgcolor="#BE185D" align="left"><font color="white"><b>Google Gemini</b></font></td></tr><tr><td align="left" balign="left"><font color="#475569" point-size="11">analysis · rewrite</font></td></tr><tr><td align="left" balign="left"><font color="#475569" point-size="11">score · cover letter</font></td></tr></table>>];
+    gid [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="7" color="#BE185D" bgcolor="white"><tr><td bgcolor="#BE185D" align="left"><font color="white"><b>Google Identity</b></font></td></tr><tr><td align="left" balign="left"><font color="#475569" point-size="11">Sign in with Google</font></td></tr><tr><td align="left" balign="left"><font color="#475569" point-size="11">ID-token verification</font></td></tr></table>>];
+    {rank=same; gid; db; gem;}
+  }
+  {rank=same; user; gh;}
+  user -> spa [color="#4F46E5"];
+  pdfjs -> spa [style=dashed, color="#4F46E5", dir=back];
+  spa -> apic [color="#4F46E5"];
+  apic -> mw [label="  HTTPS · JSON · JWT", color="#4F46E5", penwidth=2.2];
+  mw -> ctrl [color="#0F766E"]; ctrl -> svc [color="#0F766E"];
+  svc -> db [label="  Mongoose", color="#15803D"];
+  svc -> gem [label="  prompt + JSON schema", color="#BE185D"];
+  ctrl -> gid [label="  verify token", style=dashed, color="#BE185D"];
+  gh -> spa [label="  auto-deploy
+  Vercel + Render", style=dashed, color="#334155"];
+}

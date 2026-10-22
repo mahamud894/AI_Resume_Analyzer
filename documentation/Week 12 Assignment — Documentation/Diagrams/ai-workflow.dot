@@ -1,0 +1,36 @@
+digraph AI {
+  graph [fontname="Inter", bgcolor="white", pad=0.35, splines=spline, newrank=true];
+  node  [shape=plain, fontname="Inter", fontsize=13, fontcolor="#0F172A"];
+  edge  [fontname="Inter", fontsize=10, color="#64748B", fontcolor="#475569", penwidth=1.6, arrowsize=0.75];
+  graph [rankdir=TB, nodesep=0.5, ranksep=0.42];
+  subgraph cluster_a { label=<<font color="#0F766E"><b>A  Analyse the resume</b></font>>; labeljust=l; labelloc=b; fontsize=14; style="rounded,filled"; fillcolor="#F0FDFA"; color="#99F6E4"; penwidth=1.4; margin=14;
+    in [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="7" color="#4F46E5" bgcolor="white"><tr><td bgcolor="#4F46E5" align="left" width="240"><font color="white" point-size="11"><b>1</b></font>  <font color="white"><b>Input</b></font></td></tr><tr><td align="left" balign="left" width="240"><font color="#475569" point-size="11">Resume PDF + company,</font></td></tr><tr><td align="left" balign="left" width="240"><font color="#475569" point-size="11">job title, job description</font></td></tr></table>>];
+    parse [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="7" color="#0F766E" bgcolor="white"><tr><td bgcolor="#0F766E" align="left" width="240"><font color="white" point-size="11"><b>2</b></font>  <font color="white"><b>Extract text</b></font></td></tr><tr><td align="left" balign="left" width="240"><font color="#475569" point-size="11">pdf-parse (max 30 000 chars)</font></td></tr><tr><td align="left" balign="left" width="240"><font color="#475569" point-size="11">no text → 422 scanned PDF</font></td></tr></table>>];
+    prompt [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="7" color="#0F766E" bgcolor="white"><tr><td bgcolor="#0F766E" align="left" width="240"><font color="white" point-size="11"><b>3</b></font>  <font color="white"><b>Build prompt</b></font></td></tr><tr><td align="left" balign="left" width="240"><font color="#475569" point-size="11">expert ATS reviewer rules</font></td></tr><tr><td align="left" balign="left" width="240"><font color="#475569" point-size="11">honest 0–100 scores, 3–4 tips</font></td></tr></table>>];
+    gem [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="7" color="#BE185D" bgcolor="white"><tr><td bgcolor="#BE185D" align="left" width="240"><font color="white" point-size="11"><b>4</b></font>  <font color="white"><b>Google Gemini</b></font></td></tr><tr><td align="left" balign="left" width="240"><font color="#475569" point-size="11">JSON mode + responseJsonSchema</font></td></tr><tr><td align="left" balign="left" width="240"><font color="#475569" point-size="11">→ always the Feedback shape</font></td></tr></table>>];
+    norm [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="7" color="#0F766E" bgcolor="white"><tr><td bgcolor="#0F766E" align="left" width="240"><font color="white" point-size="11"><b>5</b></font>  <font color="white"><b>Validate</b></font></td></tr><tr><td align="left" balign="left" width="240"><font color="#475569" point-size="11">clamp scores to 0–100</font></td></tr><tr><td align="left" balign="left" width="240"><font color="#475569" point-size="11">drop malformed tips</font></td></tr></table>>];
+    save [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="7" color="#15803D" bgcolor="white"><tr><td bgcolor="#15803D" align="left" width="240"><font color="white" point-size="11"><b>6</b></font>  <font color="white"><b>Save &amp; show</b></font></td></tr><tr><td align="left" balign="left" width="240"><font color="#475569" point-size="11">Analysis in MongoDB</font></td></tr><tr><td align="left" balign="left" width="240"><font color="#475569" point-size="11">→ result page</font></td></tr></table>>];
+    retry [shape=diamond, style="filled", fillcolor="#FFFBEB", color="#F59E0B", penwidth=1.4, fontsize=11, fontcolor="#92400E", label="busy?\n500/503/504"];
+    wait [shape=box, style="rounded,filled", fillcolor="#FFFBEB", color="#FDE68A", fontsize=10, fontcolor="#92400E", label="wait 2 s, then 4 s\n(max 3 tries)"];
+    {rank=same; retry; wait;}
+  }
+  subgraph cluster_b { label=<<font color="#BE185D"><b>B  Improve and apply</b></font>>; labeljust=l; labelloc=b; fontsize=14; style="rounded,filled"; fillcolor="#FDF2F8"; color="#FBCFE8"; penwidth=1.4; margin=14;
+    start [shape=box, style="rounded,filled", fillcolor="#FDF2F8", color="#BE185D", penwidth=1.4, fontsize=12, fontcolor="#9D174D", label="after step 6: user clicks\n\"Improve My CV (Europass)\""];
+    imp [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="7" color="#BE185D" bgcolor="white"><tr><td bgcolor="#BE185D" align="left" width="240"><font color="white" point-size="11"><b>7</b></font>  <font color="white"><b>Europass rewrite</b></font></td></tr><tr><td align="left" balign="left" width="240"><font color="#475569" point-size="11">resume + every "improve" tip + job</font></td></tr><tr><td align="left" balign="left" width="240"><font color="#475569" point-size="11">never invent facts</font></td></tr></table>>];
+    post [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="7" color="#B45309" bgcolor="white"><tr><td bgcolor="#B45309" align="left" width="240"><font color="white" point-size="11"><b>8</b></font>  <font color="white"><b>postCheck() in code</b></font></td></tr><tr><td align="left" balign="left" width="240"><font color="#475569" point-size="11">new numbers → placeholders</font></td></tr><tr><td align="left" balign="left" width="240"><font color="#475569" point-size="11">MM/YYYY dates · EQF · grades</font></td></tr></table>>];
+    score [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="7" color="#BE185D" bgcolor="white"><tr><td bgcolor="#BE185D" align="left" width="240"><font color="white" point-size="11"><b>9a</b></font>  <font color="white"><b>Before / after score</b></font></td></tr><tr><td align="left" balign="left" width="240"><font color="#475569" point-size="11">improved CV → text</font></td></tr><tr><td align="left" balign="left" width="240"><font color="#475569" point-size="11">same prompt, same job</font></td></tr></table>>];
+    cl [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="7" color="#BE185D" bgcolor="white"><tr><td bgcolor="#BE185D" align="left" width="240"><font color="white" point-size="11"><b>9b</b></font>  <font color="white"><b>Cover letter</b></font></td></tr><tr><td align="left" balign="left" width="240"><font color="#475569" point-size="11">CV facts only · 250–400 words</font></td></tr><tr><td align="left" balign="left" width="240"><font color="#475569" point-size="11">code adds header &amp; sign-off</font></td></tr></table>>];
+    {rank=same; score; cl;}
+  }
+  in -> parse -> prompt -> gem;
+  gem -> retry [color="#B45309"];
+  retry -> wait [label=" yes", color="#B45309", fontcolor="#B45309"];
+  wait -> gem [style=dashed, color="#B45309", constraint=false];
+  retry -> norm [label=" no", color="#0F766E", fontcolor="#0F766E"];
+  norm -> save;
+  start -> imp [color="#BE185D"];
+  imp -> post [color="#BE185D"];
+  post -> score [label=" optional", color="#BE185D"];
+  post -> cl [label=" optional", color="#BE185D"];
+  {rank=same; in; start;}
+}
