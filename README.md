@@ -222,6 +222,24 @@ AI-Resume-Analyzer/
 
 ---
 
+## 📸 Screenshots
+
+| Landing page | Dashboard |
+| --- | --- |
+| ![Landing page](screenshots/desktop-landing.png) | ![Dashboard](screenshots/desktop-home.png) |
+| **Upload & analyze** | **AI analysis result** |
+| ![Upload](screenshots/desktop-upload.png) | ![Result](screenshots/desktop-result.png) |
+| **Europass CV** | **Cover letter** |
+| ![Europass CV](screenshots/desktop-europass.png) | ![Cover letter](screenshots/desktop-cover-letter.png) |
+
+| Mobile: landing | Mobile: result | Mobile: Europass CV | Mobile: menu |
+| --- | --- | --- | --- |
+| ![](screenshots/mobile-landing.png) | ![](screenshots/mobile-result.png) | ![](screenshots/mobile-europass.png) | ![](screenshots/mobile-navbar-menu.png) |
+
+More screens (auth, processing, before/after score, 404) are in [`screenshots/`](screenshots/).
+
+---
+
 ## ⚙️ 7. Setup & Run Locally
 
 ### Prerequisites
